@@ -1,0 +1,4 @@
+INDEX VERSION 1.134+C:\Users\Admin\PTUD_N8\.metadata\.plugins\org.eclipse.jdt.core
+1755220699.index
+1954726492.index
+1865797976.index
