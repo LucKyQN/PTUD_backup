@@ -191,7 +191,7 @@ package DAO;
 import Entity.BanAn;
 import Entity.LoaiBan;
 import connectDatabase.ConnectDB;
-
+import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -315,24 +315,37 @@ public class BanAnDAO {
     // ========================================================
     // CẬP NHẬT TRẠNG THÁI BÀN ĐƠN LẺ
     // ========================================================
-    public boolean capNhatTrangThaiBan(String tenBan, String trangThaiMoi) {
-        String sql = "UPDATE BanAn SET trangThai = ? WHERE tenBan = ?";
+//    public boolean capNhatTrangThaiBan(String tenBan, String trangThaiMoi) {
+//        String sql = "UPDATE BanAn SET trangThai = ? WHERE tenBan = ?";
+//        try {
+//            Connection con = getConnection();
+//            PreparedStatement stmt = con.prepareStatement(sql);
+//            stmt.setString(1, trangThaiMoi);
+//            stmt.setString(2, tenBan);
+//            
+//            int rows = stmt.executeUpdate();
+//            stmt.close();
+//            
+//            return rows > 0;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
+    public boolean capNhatTrangThaiBan(String maBan, String trangThai) {
+        String sql = "UPDATE BanAn SET trangThai = ? WHERE maBan = ?";
         try {
-            Connection con = getConnection();
+            Connection con = ConnectDB.getInstance().getConnection();
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, trangThaiMoi);
-            stmt.setString(2, tenBan);
+            stmt.setString(1, trangThai); // Truyền vào "Có khách"
+            stmt.setString(2, maBan);
             
-            int rows = stmt.executeUpdate();
-            stmt.close();
-            
-            return rows > 0;
-        } catch (Exception e) {
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
-
     // ========================================================
     // HÀM MỚI: CHUYỂN BÀN & GỘP BÀN (DÙNG TRANSACTION)
     // ========================================================

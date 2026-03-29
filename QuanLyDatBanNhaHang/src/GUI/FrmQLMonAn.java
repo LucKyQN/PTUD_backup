@@ -95,7 +95,7 @@ public class FrmQLMonAn extends JPanel {
 				BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true), new EmptyBorder(16, 16, 16, 16)));
 
 		model = new DefaultTableModel(
-				new String[] { "Mã món", "Tên món", "Danh mục", "Đơn vị", "Tồn kho", "Giá bán", "Trạng thái" }, 0) {
+				new String[] { "Mã món", "Tên món", "Danh Mục", "Đơn vị", "Tồn kho", "Giá bán", "Trạng thái" }, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return false;

@@ -2,9 +2,10 @@
 <qualifiedTypeNameHistroy>
     <fullyQualifiedTypeName name="com.sun.xml.internal.stream.Entity"/>
     <fullyQualifiedTypeName name="DAO.NhanVienDAO"/>
-    <fullyQualifiedTypeName name="Entity.NhanVien"/>
     <fullyQualifiedTypeName name="java.sql.Connection"/>
     <fullyQualifiedTypeName name="connectDatabase.ConnectDB"/>
     <fullyQualifiedTypeName name="DAO.PhucVuServiceDb"/>
     <fullyQualifiedTypeName name="DAO.PhucVuServiceMemory"/>
+    <fullyQualifiedTypeName name="Entity.NhanVien"/>
+    <fullyQualifiedTypeName name="java.sql.SQLException"/>
 </qualifiedTypeNameHistroy>
