@@ -352,8 +352,6 @@ public class FrmQLMonAn extends JPanel {
 
 			if (monAnSua != null) {
 				doDuLieuLenForm();
-			} else {
-				txtMaMon.setText(dao.getMaMonTuDong());
 			}
 
 			pack();

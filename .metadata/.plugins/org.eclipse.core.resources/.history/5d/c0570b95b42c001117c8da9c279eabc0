@@ -352,8 +352,6 @@ public class FrmQLMonAn extends JPanel {
 
 			if (monAnSua != null) {
 				doDuLieuLenForm();
-			} else {
-				txtMaMon.setText(dao.getMaMonTuDong());
 			}
 
 			pack();
@@ -374,8 +372,6 @@ public class FrmQLMonAn extends JPanel {
 			fields.setOpaque(false);
 
 			txtMaMon = new JTextField();
-			txtMaMon.setEditable(false); // Không cho nhập tay
-			txtMaMon.setBackground(new Color(240, 240, 240)); // Đổi màu nền cho người dùng biết là ô tự động
 			txtTenMon = new JTextField();
 
 			cboDanhMuc = new JComboBox<>();
