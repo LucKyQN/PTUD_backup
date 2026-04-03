@@ -543,43 +543,7 @@ public class HoaDonDAO {
 		return null;
 	}
 
-//	public List<Model.MonAnModel> getMonAnTheoBan(String maBan, String trangThaiBan) {
-//		List<Model.MonAnModel> ds = new ArrayList<>();
-//		String sql = "";
-//
-//		// TRƯỜNG HỢP 1: Bàn đang có khách (Màu đỏ) -> Lấy từ Chi tiết Hóa đơn
-//		if (trangThaiBan.equalsIgnoreCase("Có khách")) {
-//			sql = "SELECT m.tenMonAn, c.soLuong, m.giaBan, (c.soLuong * m.giaBan) as thanhTien "
-//					+ "FROM ChiTietHoaDon c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn "
-//					+ "JOIN HoaDon h ON c.maHD = h.maHD "
-//					+ "WHERE h.maBan = ? AND h.trangThaiThanhToan = N'Chưa thanh toán'";
-//		}
-//		// TRƯỜNG HỢP 2: Bàn đã đặt (Màu vàng) -> Lấy từ Chi tiết Phiếu đặt
-//		else if (trangThaiBan.equalsIgnoreCase("Đã đặt")) {
-//			sql = "SELECT m.tenMonAn, c.soLuong, m.giaBan, (c.soLuong * m.giaBan) as thanhTien "
-//					+ "FROM ChiTietPhieuDat c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn "
-//					+ "JOIN PhieuDatBan p ON c.maPhieu = p.maPhieu "
-//					+ "WHERE p.maBan = ? AND p.trangThai = N'Chờ khách'";
-//		}
-//
-//		try {
-//			Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-//			PreparedStatement ps = con.prepareStatement(sql);
-//			ps.setString(1, maBan);
-//			ResultSet rs = ps.executeQuery();
-//			while (rs.next()) {
-//				Model.MonAnModel mon = new Model.MonAnModel();
-//				mon.tenMonAn = rs.getString("tenMonAn");
-//				mon.soLuong = rs.getInt("soLuong");
-//				mon.giaBan = rs.getLong("giaBan");
-//				mon.thanhTien = rs.getLong("thanhTien");
-//				ds.add(mon);
-//			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		return ds;
-//	}
+	//////
 	public List<Model.MonAnModel> getMonAnTheoBan(String maBan, String trangThaiBan) {
 		List<Model.MonAnModel> ds = new ArrayList<>();
 		String sql = "";
@@ -591,13 +555,12 @@ public class HoaDonDAO {
 					+ "JOIN HoaDon h ON c.maHD = h.maHD "
 					+ "WHERE h.maBan = ? AND h.trangThaiThanhToan = N'Chưa thanh toán'";
 		}
-		// TRƯỜNG HỢP 2: Bàn đã đặt (Màu vàng) -> Lấy từ DonDatMon + ChiTietDonDatMon
+		// TRƯỜNG HỢP 2: Bàn đã đặt (Màu vàng) -> Lấy từ Chi tiết Phiếu đặt
 		else if (trangThaiBan.equalsIgnoreCase("Đã đặt")) {
-			sql = "SELECT m.tenMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan) as thanhTien "
-					+ "FROM ChiTietDonDatMon ct " + "JOIN MonAn m ON ct.maMonAn = m.maMonAn "
-					+ "JOIN DonDatMon d ON ct.maDon = d.maDon " + "WHERE d.maBan = ? AND d.trangThai = N'Chờ khách'";
-		} else {
-			return ds;
+			sql = "SELECT m.tenMonAn, c.soLuong, m.giaBan, (c.soLuong * m.giaBan) as thanhTien "
+					+ "FROM ChiTietPhieuDat c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn "
+					+ "JOIN PhieuDatBan p ON c.maPhieu = p.maPhieu "
+					+ "WHERE p.maBan = ? AND p.trangThai = N'Chờ khách'";
 		}
 
 		try {
@@ -605,7 +568,6 @@ public class HoaDonDAO {
 			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, maBan);
 			ResultSet rs = ps.executeQuery();
-
 			while (rs.next()) {
 				Model.MonAnModel mon = new Model.MonAnModel();
 				mon.tenMonAn = rs.getString("tenMonAn");
@@ -614,54 +576,31 @@ public class HoaDonDAO {
 				mon.thanhTien = rs.getLong("thanhTien");
 				ds.add(mon);
 			}
-
-			rs.close();
-			ps.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return ds;
 	}
 
-	public boolean copyMonAnTuPhieuSangHoaDon(String maBan, String maHD) {
-		String sql = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu, ghiChu) "
-				+ "SELECT ?, ct.maMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan), N'Chưa lên', ct.ghiChu "
-				+ "FROM ChiTietDonDatMon ct " + "JOIN DonDatMon d ON ct.maDon = d.maDon "
-				+ "JOIN MonAn m ON ct.maMonAn = m.maMonAn " + "WHERE d.maBan = ? AND d.trangThai = N'Chờ khách'";
-
+	public boolean copyMonAnTuPhieuSangHoaDon(String maPhieu, String maHD) {
+		// Câu lệnh SQL: Lấy dữ liệu từ ChiTietPhieuDat và INSERT vào ChiTietHoaDon
+		// Lưu ý: donGia lấy từ bảng MonAn để đảm bảo giá mới nhất
+		String sql = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu) "
+				+ "SELECT ?, ct.maMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan), N'Chưa lên' "
+				+ "FROM ChiTietPhieuDat ct " + "JOIN MonAn m ON ct.maMonAn = m.maMonAn " + "WHERE ct.maPhieu = ?";
 		try {
 			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
 			java.sql.PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, maHD);
-			ps.setString(2, maBan);
+			ps.setString(2, maPhieu);
 
-			int rows = ps.executeUpdate();
-			System.out.println(">>> So mon copy sang hoa don: " + rows);
+			ps.executeUpdate();
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
-//	public boolean copyMonAnTuPhieuSangHoaDon(String maPhieu, String maHD) {
-//		// Câu lệnh SQL: Lấy dữ liệu từ ChiTietPhieuDat và INSERT vào ChiTietHoaDon
-//		// Lưu ý: donGia lấy từ bảng MonAn để đảm bảo giá mới nhất
-//		String sql = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu) "
-//				+ "SELECT ?, ct.maMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan), N'Chưa lên' "
-//				+ "FROM ChiTietPhieuDat ct " + "JOIN MonAn m ON ct.maMonAn = m.maMonAn " + "WHERE ct.maPhieu = ?";
-//		try {
-//			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-//			java.sql.PreparedStatement ps = con.prepareStatement(sql);
-//			ps.setString(1, maHD);
-//			ps.setString(2, maPhieu);
-//
-//			ps.executeUpdate();
-//			return true;
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			return false;
-//		}
-//	}
 
 	// Phục vụ yêu cầu thanh toán
 	public boolean yeuCauThanhToan(String maHD, String maBan) {

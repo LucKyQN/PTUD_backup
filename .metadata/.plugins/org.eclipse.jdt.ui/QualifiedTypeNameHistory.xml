@@ -14,4 +14,5 @@
     <fullyQualifiedTypeName name="Entity.LuuLog"/>
     <fullyQualifiedTypeName name="Model.NhanVienModel"/>
     <fullyQualifiedTypeName name="connectDatabase.ConnectDB"/>
+    <fullyQualifiedTypeName name="Model.MonAnModel"/>
 </qualifiedTypeNameHistroy>

@@ -543,6 +543,7 @@ public class HoaDonDAO {
 		return null;
 	}
 
+	//////
 //	public List<Model.MonAnModel> getMonAnTheoBan(String maBan, String trangThaiBan) {
 //		List<Model.MonAnModel> ds = new ArrayList<>();
 //		String sql = "";
@@ -580,22 +581,22 @@ public class HoaDonDAO {
 //		}
 //		return ds;
 //	}
-	public List<Model.MonAnModel> getMonAnTheoBan(String maBan, String trangThaiBan) {
-		List<Model.MonAnModel> ds = new ArrayList<>();
+	@Override
+	public List<MonAnModel> getMonAnTheoBan(String maBan, String trangThaiBan) {
+		List<MonAnModel> ds = new ArrayList<>();
 		String sql = "";
 
-		// TRƯỜNG HỢP 1: Bàn đang có khách (Màu đỏ) -> Lấy từ Chi tiết Hóa đơn
-		if (trangThaiBan.equalsIgnoreCase("Có khách")) {
-			sql = "SELECT m.tenMonAn, c.soLuong, m.giaBan, (c.soLuong * m.giaBan) as thanhTien "
-					+ "FROM ChiTietHoaDon c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn "
-					+ "JOIN HoaDon h ON c.maHD = h.maHD "
+		if (trangThai.equalsIgnoreCase("Có khách")) {
+			sql = "SELECT m.maMonAn, m.tenMonAn, c.soLuong, m.giaBan, " + "       (c.soLuong * m.giaBan) as thanhTien, "
+					+ "       c.trangThaiPhucVu, c.id_cthd " + "FROM ChiTietHoaDon c "
+					+ "JOIN MonAn m ON c.maMonAn = m.maMonAn " + "JOIN HoaDon h ON c.maHD = h.maHD "
 					+ "WHERE h.maBan = ? AND h.trangThaiThanhToan = N'Chưa thanh toán'";
-		}
-		// TRƯỜNG HỢP 2: Bàn đã đặt (Màu vàng) -> Lấy từ DonDatMon + ChiTietDonDatMon
-		else if (trangThaiBan.equalsIgnoreCase("Đã đặt")) {
-			sql = "SELECT m.tenMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan) as thanhTien "
-					+ "FROM ChiTietDonDatMon ct " + "JOIN MonAn m ON ct.maMonAn = m.maMonAn "
-					+ "JOIN DonDatMon d ON ct.maDon = d.maDon " + "WHERE d.maBan = ? AND d.trangThai = N'Chờ khách'";
+		} else if (trangThai.equalsIgnoreCase("Đã đặt")) {
+			sql = "SELECT m.maMonAn, m.tenMonAn, ct.soLuong, m.giaBan, "
+					+ "       (ct.soLuong * m.giaBan) as thanhTien, "
+					+ "       N'Đã đặt trước' as trangThaiPhucVu, 0 as id_cthd " + "FROM ChiTietDonDatMon ct "
+					+ "JOIN MonAn m ON ct.maMonAn = m.maMonAn " + "JOIN DonDatMon d ON ct.maDon = d.maDon "
+					+ "WHERE d.maBan = ? AND d.trangThai = N'Chờ khách'";
 		} else {
 			return ds;
 		}
@@ -607,12 +608,15 @@ public class HoaDonDAO {
 			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {
-				Model.MonAnModel mon = new Model.MonAnModel();
-				mon.tenMonAn = rs.getString("tenMonAn");
-				mon.soLuong = rs.getInt("soLuong");
-				mon.giaBan = rs.getLong("giaBan");
-				mon.thanhTien = rs.getLong("thanhTien");
-				ds.add(mon);
+				MonAnModel m = new MonAnModel();
+				m.id_cthd = rs.getInt("id_cthd");
+				m.maMonAn = rs.getString("maMonAn");
+				m.tenMonAn = rs.getString("tenMonAn");
+				m.soLuong = rs.getInt("soLuong");
+				m.giaBan = rs.getLong("giaBan");
+				m.thanhTien = rs.getLong("thanhTien");
+				m.trangThaiPhucVu = rs.getString("trangThaiPhucVu");
+				ds.add(m);
 			}
 
 			rs.close();

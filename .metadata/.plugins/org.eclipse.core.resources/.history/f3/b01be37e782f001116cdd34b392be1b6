@@ -543,7 +543,7 @@ public class FrmLeTan extends JFrame {
 
 		boolean copyMonOk = false;
 		if (hdOk) {
-			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maBan, maHD);
+			copyMonOk = hoaDonDAO.copyMonAnTuDonDatMonSangHoaDon(maBan, maHD);
 		}
 
 		boolean banOk = banAnDAO.capNhatTrangThai(maBan, "Có khách");

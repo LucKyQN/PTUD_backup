@@ -517,6 +517,7 @@ public class FrmLeTan extends JFrame {
 	}
 
 	// CHECK-IN & HÀM TIỆN ÍCH
+
 	private void xuLyCheckIn(String maPhieu, String tenKhach, String maBan, String tenBan, JPanel cardRef) {
 		int check = JOptionPane.showConfirmDialog(cardRef, "Check-in cho khách " + tenKhach + " vào " + tenBan + "?",
 				"Xác nhận Check-in", JOptionPane.YES_NO_OPTION);
@@ -540,68 +541,24 @@ public class FrmLeTan extends JFrame {
 		String maNV = (LuuLog.nhanVienDangNhap != null) ? LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
 
 		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, tenKhach, sdtKhach, soLuongKhach);
-
-		boolean copyMonOk = false;
+		boolean copyMonOk = true;
 		if (hdOk) {
-			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maBan, maHD);
+			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maPhieu, maHD);
 		}
-
 		boolean banOk = banAnDAO.capNhatTrangThai(maBan, "Có khách");
+
 		boolean phieuOk = phieuDAO.capNhatTrangThaiPhieu(maPhieu, "Đã đến");
 
-		if (hdOk && copyMonOk && banOk && phieuOk) {
+		if (hdOk && banOk && phieuOk) {
 			JOptionPane.showMessageDialog(cardRef, "✅ Check-in thành công cho " + tenKhach + "!\nMã HĐ: " + maHD,
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
-			refreshSoDoBan();
-			loadDanhSachDatCho();
+			refreshSoDoBan(); // Bàn chuyển sang màu đỏ
+			loadDanhSachDatCho(); // Xóa card vàng ở bên phải
 		} else {
-			JOptionPane.showMessageDialog(cardRef,
-					"Lỗi khi lưu dữ liệu Check-in!\n" + "hdOk = " + hdOk + "\n" + "copyMonOk = " + copyMonOk + "\n"
-							+ "banOk = " + banOk + "\n" + "phieuOk = " + phieuOk,
-					"Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(cardRef, "Lỗi khi lưu dữ liệu Check-in!", "Lỗi hệ thống",
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
-//	private void xuLyCheckIn(String maPhieu, String tenKhach, String maBan, String tenBan, JPanel cardRef) {
-//		int check = JOptionPane.showConfirmDialog(cardRef, "Check-in cho khách " + tenKhach + " vào " + tenBan + "?",
-//				"Xác nhận Check-in", JOptionPane.YES_NO_OPTION);
-//
-//		if (check != JOptionPane.YES_OPTION)
-//			return;
-//
-//		String sdtKhach = "0000000000";
-//		int soLuongKhach = 1;
-//
-//		List<PhieuDatBan> dsPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
-//		for (PhieuDatBan p : dsPhieu) {
-//			if (p.getMaPhieu().equals(maPhieu)) {
-//				sdtKhach = p.getSoDienThoai();
-//				soLuongKhach = p.getSoLuongKhach();
-//				break;
-//			}
-//		}
-//
-//		String maHD = "HD" + System.currentTimeMillis();
-//		String maNV = (LuuLog.nhanVienDangNhap != null) ? LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
-//
-//		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, tenKhach, sdtKhach, soLuongKhach);
-//		boolean copyMonOk = true;
-//		if (hdOk) {
-//			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maPhieu, maHD);
-//		}
-//		boolean banOk = banAnDAO.capNhatTrangThai(maBan, "Có khách");
-//
-//		boolean phieuOk = phieuDAO.capNhatTrangThaiPhieu(maPhieu, "Đã đến");
-//
-//		if (hdOk && banOk && phieuOk) {
-//			JOptionPane.showMessageDialog(cardRef, "✅ Check-in thành công cho " + tenKhach + "!\nMã HĐ: " + maHD,
-//					"Thành công", JOptionPane.INFORMATION_MESSAGE);
-//			refreshSoDoBan(); // Bàn chuyển sang màu đỏ
-//			loadDanhSachDatCho(); // Xóa card vàng ở bên phải
-//		} else {
-//			JOptionPane.showMessageDialog(cardRef, "Lỗi khi lưu dữ liệu Check-in!", "Lỗi hệ thống",
-//					JOptionPane.ERROR_MESSAGE);
-//		}
-//	}
 
 	private JButton createSolidButton(String text, Color bg, Color fg) {
 		JButton btn = new JButton(text);
