@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <qualifiedTypeNameHistroy>
-    <fullyQualifiedTypeName name="com.sun.xml.internal.stream.Entity"/>
     <fullyQualifiedTypeName name="DAO.NhanVienDAO"/>
     <fullyQualifiedTypeName name="java.sql.Connection"/>
-    <fullyQualifiedTypeName name="connectDatabase.ConnectDB"/>
     <fullyQualifiedTypeName name="DAO.PhucVuServiceDb"/>
     <fullyQualifiedTypeName name="DAO.PhucVuServiceMemory"/>
     <fullyQualifiedTypeName name="Entity.NhanVien"/>
     <fullyQualifiedTypeName name="java.sql.SQLException"/>
     <fullyQualifiedTypeName name="javax.swing.JComboBox"/>
+    <fullyQualifiedTypeName name="java.util.ArrayList"/>
+    <fullyQualifiedTypeName name="javax.swing.JDialog"/>
+    <fullyQualifiedTypeName name="com.sun.xml.internal.stream.Entity"/>
+    <fullyQualifiedTypeName name="Entity.DlgNhapThongTinKhach"/>
+    <fullyQualifiedTypeName name="Entity.LuuLog"/>
+    <fullyQualifiedTypeName name="Model.NhanVienModel"/>
+    <fullyQualifiedTypeName name="connectDatabase.ConnectDB"/>
 </qualifiedTypeNameHistroy>

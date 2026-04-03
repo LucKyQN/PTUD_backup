@@ -1,0 +1,30 @@
+package Model;
+
+public class NhanVienModel {
+	public String maNV; // Mã nhân viên (Khóa chính)
+	public String tenNV; // Tên đầy đủ
+	public String chucVu; // Ví dụ: Lễ tân, Thu ngân, Quản lý
+	public String taiKhoan; // Tên đăng nhập
+	public String matKhau; // Mật khẩu (thường dùng để check login)
+
+	// Constructor mặc định
+	public NhanVienModel() {
+	}
+
+	// Constructor đầy đủ (tùy chọn)
+	public NhanVienModel(String maNV, String tenNV, String chucVu) {
+		this.maNV = maNV;
+		this.tenNV = tenNV;
+		this.chucVu = chucVu;
+	}
+
+	// Trong file NhanVien.java (hoặc NhanVienModel.java)
+	public String getMaNV() {
+		return this.maNV; // Đảm bảo biến lưu mã nhân viên của bạn tên là maNV
+	}
+
+	// Tiện tay thêm luôn getTenNV nếu chưa có để hiện lên màn hình cho đẹp
+	public String getTenNV() {
+		return this.tenNV; // Hoặc tên biến tương ứng của bạn
+	}
+}

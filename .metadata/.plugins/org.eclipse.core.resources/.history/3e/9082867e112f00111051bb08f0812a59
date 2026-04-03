@@ -1,0 +1,60 @@
+package Entity;
+
+import javax.swing.JDialog;
+
+public class DlgNhapThongTinKhach extends JDialog {
+	private JTextField txtTen, txtSDT;
+	private JSpinner spnSoNguoi;
+	private JButton btnXacNhan;
+	private boolean isSuccess = false; // Để kiểm tra xem Lễ tân có bấm Xác nhận hay không
+
+	public DlgNhapThongTinKhach(JFrame parent) {
+		super(parent, "Thông tin khách mới", true);
+		setLayout(new GridLayout(4, 2, 10, 10));
+
+		add(new JLabel(" Tên khách:"));
+		txtTen = new JTextField();
+		add(txtTen);
+
+		add(new JLabel(" Số điện thoại:"));
+		txtSDT = new JTextField();
+		add(txtSDT);
+
+		add(new JLabel(" Số người:"));
+		spnSoNguoi = new JSpinner(new SpinnerNumberModel(1, 1, 20, 1));
+		add(spnSoNguoi);
+
+		btnXacNhan = new JButton("Xác nhận mở bàn");
+		add(new JLabel("")); // Khoảng trống
+		add(btnXacNhan);
+
+		btnXacNhan.addActionListener(e -> {
+			if (txtTen.getText().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Vui lòng nhập tên khách!");
+			} else {
+				isSuccess = true;
+				dispose(); // Đóng form
+			}
+		});
+
+		setSize(300, 200);
+		setLocationRelativeTo(parent);
+	}
+
+	// Các hàm Getter để lấy dữ liệu ra ngoài
+	public String getTen() {
+		return txtTen.getText();
+	}
+
+	public String getSDT() {
+		return txtSDT.getText();
+	}
+
+	public int getSoNguoi() {
+		return (int) spnSoNguoi.getValue();
+	}
+
+	public boolean isConfirmed() {
+		return isSuccess;
+	}
+}

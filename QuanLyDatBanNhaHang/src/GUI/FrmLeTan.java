@@ -34,6 +34,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 
+import Entity.PhieuDatBan;
+import Entity.DlgNhapThongTinKhach;
+import Entity.LuuLog;
+import Model.NhanVienModel;
+
 public class FrmLeTan extends JFrame {
 
 	private static final Color RED_MAIN = new Color(220, 38, 38);
@@ -54,9 +59,13 @@ public class FrmLeTan extends JFrame {
 	private JPanel tabsContainer;
 	private JLabel lblMapTitle;
 
+	// Panel chứa danh sách đặt bàn
+	private JPanel pnlDanhSachDatCho;
+
 	// DAO dùng chung
 	private final DAO.BanAnDAO banAnDAO = new DAO.BanAnDAO();
 	private final DAO.HoaDonDAO hoaDonDAO = new DAO.HoaDonDAO();
+	private final DAO.PhieuDatBanDAO phieuDAO = new DAO.PhieuDatBanDAO();
 
 	public FrmLeTan() {
 		initUI();
@@ -81,10 +90,12 @@ public class FrmLeTan extends JFrame {
 		root.add(centerWrap, BorderLayout.CENTER);
 		root.add(createRightSidebar(), BorderLayout.EAST);
 		setContentPane(root);
+
+		// Load danh sách ngay khi mở form
+		loadDanhSachDatCho();
 	}
 
-	// ==========================================
-	// TOP BAR
+	// TOP BAR & TABS (Giữ nguyên)
 	// ==========================================
 	private JPanel createTopBar() {
 		JPanel bar = new JPanel(new BorderLayout());
@@ -141,9 +152,6 @@ public class FrmLeTan extends JFrame {
 		new Timer(1000, e -> lblClock.setText("🕒 " + new SimpleDateFormat("HH:mm:ss").format(new Date()))).start();
 	}
 
-	// ==========================================
-	// TABS
-	// ==========================================
 	private JPanel createTabs() {
 		tabsContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 0));
 		tabsContainer.setBackground(Color.WHITE);
@@ -185,9 +193,7 @@ public class FrmLeTan extends JFrame {
 		}
 	}
 
-	// ==========================================
-	// SƠ ĐỒ BÀN
-	// ==========================================
+	// SƠ ĐỒ BÀN (Giữ nguyên logic mở/đóng)
 	private JPanel createMapArea() {
 		JPanel mapWrap = new JPanel(new BorderLayout());
 		mapWrap.setOpaque(false);
@@ -222,9 +228,6 @@ public class FrmLeTan extends JFrame {
 		return mapWrap;
 	}
 
-	// ==========================================
-	// CARD BÀN - nhận maBan thật từ DB
-	// ==========================================
 	private JPanel createTableCard(String maBan, String tenBan, int capacity, String status) {
 		Color bg, border;
 		if (status.equalsIgnoreCase("Trống")) {
@@ -297,46 +300,66 @@ public class FrmLeTan extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (status.equalsIgnoreCase("Trống")) {
-					xuLyMoBan(maBan, tenBan, capacity);
-
-				} else if (status.equalsIgnoreCase("Có khách") || status.equalsIgnoreCase("Đã đặt")) {
-					FrmThanhToan frmTT = new FrmThanhToan(FrmLeTan.this, tenBan);
-					frmTT.setVisible(true);
-					refreshSoDoBan();
+					xuLyMoBan(maBan);
+				} else if (status.equalsIgnoreCase("Có khách")) {
+					// Gọi hàm hiện thông tin thay vì mở bảng thanh toán 0đ
+					hienThiThongTinBan(maBan, tenBan);
+				} else if (status.equalsIgnoreCase("Đã đặt")) {
+					// Báo cho lễ tân biết đây là bàn khách đã đặt trước
+					JOptionPane.showMessageDialog(null,
+							"Bàn này đã được ĐẶT TRƯỚC.\nHãy Check-in cho khách ở danh sách bên phải.");
 				}
+//				else if (status.equalsIgnoreCase("Có khách") || status.equalsIgnoreCase("Đã đặt")) {
+//					FrmThanhToan frmTT = new FrmThanhToan(FrmLeTan.this, maBan, tenBan);
+//					frmTT.setVisible(true);
+//					refreshSoDoBan();
+//				}
 			}
 		});
 		return card;
 	}
 
-	// MỞ BÀN: tạo HoaDon → cập nhật trangThai bàn → mở FrmGoiMon
-	private void xuLyMoBan(String maBan, String tenBan, int sucChua) {
-		int confirm = JOptionPane.showConfirmDialog(this, "Mở bàn \"" + tenBan + "\" cho khách mới?", "Xác nhận mở bàn",
-				JOptionPane.YES_NO_OPTION);
-		if (confirm != JOptionPane.YES_OPTION)
-			return;
+	// Khi click vào bàn Trống
+	private void xuLyMoBan(String maBan) {
+		// 1. Hiện Dialog nhập thông tin khách
+		DlgNhapThongTinKhach dlg = new DlgNhapThongTinKhach(FrmLeTan.this);
+		dlg.setVisible(true);
 
-		// Tạo maHD: "HD" + timestamp để đảm bảo không trùng
-		String maHD = "HD" + System.currentTimeMillis();
+		if (dlg.isConfirmed()) {
+			// 2. Lấy dữ liệu từ Dialog
+			String ten = dlg.getTen();
+			String sdt = dlg.getSDT();
+			int soNguoi = dlg.getSoNguoi();
 
-		// TODO: truyền maNV thật từ NhanVien đăng nhập vào FrmLeTan
-		String maNV = "NV001";
+			// 3. Tự sinh mã Hóa đơn (Dùng thời gian để không trùng)
+			String maHD = "HD" + System.currentTimeMillis();
 
-		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan);
-		boolean banOk = banAnDAO.capNhatTrangThaiBan(maBan, "Có khách");
+			// 4. Lấy mã Nhân viên từ LuuLog (đã được lưu khi Đăng nhập)
+			String maNV = "NV005";
+			if (Entity.LuuLog.nhanVienDangNhap != null) {
+				maNV = Entity.LuuLog.nhanVienDangNhap.getMaNV();
+				// Lưu ý: Nếu class NhanVien của bạn dùng biến trực tiếp thì đổi thành .maNV
+			}
 
-		if (hdOk && banOk) {
-			refreshSoDoBan();
-			FrmGoiMon frm = new FrmGoiMon(FrmLeTan.this, maBan, tenBan, sucChua);
-			frm.setVisible(true);
-			refreshSoDoBan();
-		} else {
-			JOptionPane.showMessageDialog(this, "Lỗi: Không thể mở bàn!\nHD: " + hdOk + " | Bàn: " + banOk, "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
+			// 5. GỌI DAO VỚI ĐÚNG 6 THAM SỐ (Khớp hoàn toàn với HoaDonDAO)
+			boolean result = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, ten, sdt, soNguoi);
+
+			if (result) {
+				// 6. Cập nhật trạng thái bàn sang màu Đỏ (Có khách)
+				banAnDAO.capNhatTrangThai(maBan, "Có khách");
+
+				// 7. Làm mới giao diện sơ đồ bàn
+				refreshSoDoBan();
+
+				JOptionPane.showMessageDialog(this, "Mở bàn " + maBan + " thành công cho khách " + ten);
+			} else {
+				JOptionPane.showMessageDialog(this, "Lỗi khi tạo hóa đơn mới!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+			}
+
 		}
 	}
 
-	// RIGHT SIDEBAR
+	// RIGHT SIDEBAR (CỘT BÊN PHẢI)
 	private JPanel createRightSidebar() {
 		JPanel sidebar = new JPanel(new BorderLayout());
 		sidebar.setBackground(Color.WHITE);
@@ -370,18 +393,13 @@ public class FrmLeTan extends JFrame {
 		top.add(txtSearch);
 		top.add(subTitle);
 
-		JPanel list = new JPanel();
-		list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-		list.setBackground(Color.WHITE);
-		list.setBorder(new EmptyBorder(0, 20, 0, 20));
+		// KHỞI TẠO BIẾN TOÀN CỤC CHỨA DANH SÁCH BÊN PHẢI
+		pnlDanhSachDatCho = new JPanel();
+		pnlDanhSachDatCho.setLayout(new BoxLayout(pnlDanhSachDatCho, BoxLayout.Y_AXIS));
+		pnlDanhSachDatCho.setBackground(Color.WHITE);
+		pnlDanhSachDatCho.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-		// Booking cards - dùng maBan thật từ DB
-		// TODO: load từ bảng DonDatMon thay vì hardcode
-		list.add(createBookingCard("Nguyễn Văn A", "0901234567", "19:00", "BAN03", "Bàn 03", 6));
-		list.add(Box.createVerticalStrut(15));
-		list.add(createBookingCard("Trần Thị B", "0912345678", "20:00", "BAN03", "VIP 02", 8));
-
-		JScrollPane scroll = new JScrollPane(list);
+		JScrollPane scroll = new JScrollPane(pnlDanhSachDatCho);
 		scroll.setBorder(null);
 
 		JPanel actions = new JPanel(new GridLayout(4, 1, 0, 10));
@@ -415,8 +433,40 @@ public class FrmLeTan extends JFrame {
 		return sidebar;
 	}
 
-	// Booking card — nhận maBan thật để Check-in đúng
-	private JPanel createBookingCard(String name, String phone, String time, String maBan, String tenBan, int guests) {
+	// HÀM LOAD DỮ LIỆU ĐẶT CHỖ TỪ DATABASE
+	public void loadDanhSachDatCho() {
+		if (pnlDanhSachDatCho == null)
+			return;
+		pnlDanhSachDatCho.removeAll(); // Xóa sạch dữ liệu cũ
+
+		// Gọi DAO lấy danh sách phiếu
+		List<PhieuDatBan> danhSachPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
+
+		SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
+
+		if (danhSachPhieu.isEmpty()) {
+			JLabel emptyLabel = new JLabel("Không có khách đặt trước.");
+			emptyLabel.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+			emptyLabel.setForeground(TEXT_GRAY);
+			pnlDanhSachDatCho.add(emptyLabel);
+		} else {
+			for (PhieuDatBan phieu : danhSachPhieu) {
+				String timeStr = sdfTime.format(phieu.getThoiGianDen());
+
+				// Đưa vào Card Booking
+				pnlDanhSachDatCho.add(createBookingCard(phieu.getMaPhieu(), phieu.getTenKhachHang(),
+						phieu.getSoDienThoai(), timeStr, phieu.getMaBan(), phieu.getTenBan(), phieu.getSoLuongKhach()));
+				pnlDanhSachDatCho.add(Box.createVerticalStrut(15));
+			}
+		}
+
+		pnlDanhSachDatCho.revalidate();
+		pnlDanhSachDatCho.repaint();
+	}
+
+	// Bổ sung thêm tham số maPhieu vào hàm này
+	private JPanel createBookingCard(String maPhieu, String name, String phone, String time, String maBan,
+			String tenBan, int guests) {
 		JPanel card = new JPanel() {
 			@Override
 			protected void paintComponent(Graphics g) {
@@ -457,32 +507,52 @@ public class FrmLeTan extends JFrame {
 
 		JButton btnCheckIn = createSolidButton("Check-in Khách", RED_MAIN, Color.WHITE);
 		btnCheckIn.setPreferredSize(new Dimension(0, 30));
-		btnCheckIn.addActionListener(e -> xuLyCheckIn(name, maBan, tenBan, card));
+
+		// Sự kiện khi bấm Check-in
+		btnCheckIn.addActionListener(e -> xuLyCheckIn(maPhieu, name, maBan, tenBan, card));
 
 		card.add(info, BorderLayout.CENTER);
 		card.add(btnCheckIn, BorderLayout.SOUTH);
 		return card;
 	}
 
-	// CHECK-IN từ booking: tạo HoaDon + cập nhật trangThai bàn
-	private void xuLyCheckIn(String tenKhach, String maBan, String tenBan, JPanel cardRef) {
-		int xacNhan = JOptionPane.showConfirmDialog(cardRef, "Check-in cho khách " + tenKhach + " vào " + tenBan + "?",
+	// CHECK-IN & HÀM TIỆN ÍCH
+
+	private void xuLyCheckIn(String maPhieu, String tenKhach, String maBan, String tenBan, JPanel cardRef) {
+		int check = JOptionPane.showConfirmDialog(cardRef, "Check-in cho khách " + tenKhach + " vào " + tenBan + "?",
 				"Xác nhận Check-in", JOptionPane.YES_NO_OPTION);
-		if (xacNhan != JOptionPane.YES_OPTION)
+
+		if (check != JOptionPane.YES_OPTION)
 			return;
 
+		String sdtKhach = "0000000000";
+		int soLuongKhach = 1;
+
+		List<PhieuDatBan> dsPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
+		for (PhieuDatBan p : dsPhieu) {
+			if (p.getMaPhieu().equals(maPhieu)) {
+				sdtKhach = p.getSoDienThoai();
+				soLuongKhach = p.getSoLuongKhach();
+				break;
+			}
+		}
+
 		String maHD = "HD" + System.currentTimeMillis();
-		String maNV = "NV001"; // TODO: lấy từ NhanVien đăng nhập
+		String maNV = (LuuLog.nhanVienDangNhap != null) ? LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
 
-		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan);
-		boolean banOk = banAnDAO.capNhatTrangThaiBan(maBan, "Có khách");
+		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, tenKhach, sdtKhach, soLuongKhach);
 
-		if (hdOk && banOk) {
+		boolean banOk = banAnDAO.capNhatTrangThai(maBan, "Có khách");
+
+		boolean phieuOk = phieuDAO.capNhatTrangThaiPhieu(maPhieu, "Đã đến");
+
+		if (hdOk && banOk && phieuOk) {
 			JOptionPane.showMessageDialog(cardRef, "✅ Check-in thành công cho " + tenKhach + "!\nMã HĐ: " + maHD,
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
-			refreshSoDoBan();
+			refreshSoDoBan(); // Bàn chuyển sang màu đỏ
+			loadDanhSachDatCho(); // Xóa card vàng ở bên phải
 		} else {
-			JOptionPane.showMessageDialog(cardRef, "Lỗi khi check-in!\nHD: " + hdOk + " | Bàn: " + banOk, "Lỗi",
+			JOptionPane.showMessageDialog(cardRef, "Lỗi khi lưu dữ liệu Check-in!", "Lỗi hệ thống",
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -509,7 +579,28 @@ public class FrmLeTan extends JFrame {
 		return btn;
 	}
 
-	// REFRESH SƠ ĐỒ BÀN — truyền maBan thật vào card
+	private void hienThiThongTinBan(String maBan, String tenBan) {
+		// 1. Gọi DAO lấy mảng thông tin [Tên, SĐT, SL, Giờ]
+		String[] infoKhach = hoaDonDAO.getThongTinKhachVuaMo(maBan);
+
+		if (infoKhach != null) {
+			String ten = infoKhach[0];
+			String sdt = infoKhach[1];
+			String sl = infoKhach[2];
+			String gio = infoKhach[3];
+
+			String msg = "🏮 NHÀ HÀNG NGÓI ĐỎ 🏮\n"
+
+					+ "Bàn: " + tenBan + "\n" + "Khách hàng: " + (ten != null ? ten : "Khách lẻ") + "\n"
+					+ "Số điện thoại: " + (sdt != null ? sdt : "Trống") + "\n" + "Số lượng: " + sl + " người\n"
+					+ "Giờ vào bàn: " + gio + "\n";
+
+			JOptionPane.showMessageDialog(this, msg, "Thông tin khách đang ngồi", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(this, "Bàn đang trống hoặc chưa có dữ liệu khách!");
+		}
+	}
+
 	public void refreshSoDoBan() {
 		if (gridMap == null)
 			return;
@@ -522,9 +613,8 @@ public class FrmLeTan extends JFrame {
 		for (Entity.BanAn ban : danhSachBan) {
 			String viTri = ban.getViTri();
 			if (viTri != null && viTri.trim().equalsIgnoreCase(currentTab)) {
-				gridMap.add(createTableCard(ban.getMaBan(), // maBan thật: "BAN01", "BAN02"...
-						ban.getTenBan(), // tenBan hiển thị: "Bàn 1", "Bàn 2"...
-						ban.getSucChua(), ban.getTrangThai().trim()));
+				gridMap.add(
+						createTableCard(ban.getMaBan(), ban.getTenBan(), ban.getSucChua(), ban.getTrangThai().trim()));
 			}
 		}
 		gridMap.revalidate();

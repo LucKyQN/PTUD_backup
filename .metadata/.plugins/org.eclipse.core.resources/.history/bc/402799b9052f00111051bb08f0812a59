@@ -1,0 +1,734 @@
+//
+//package GUI;
+//
+//import DAO.PhucVuService;
+//import DAO.PhucVuServiceDb;
+//import Entity.MonAn;
+//import Entity.NhanVien;
+//import Model.BanAnModel;
+//import Model.MonAnModel;
+//
+//import javax.swing.*;
+//import javax.swing.border.EmptyBorder;
+//import javax.swing.event.TableModelEvent;
+//import javax.swing.table.DefaultTableModel;
+//import javax.swing.table.TableColumn;
+//import java.awt.*;
+//import java.awt.event.MouseAdapter;
+//import java.awt.event.MouseEvent;
+//import java.text.NumberFormat;
+//import java.util.List;
+//import java.util.Locale;
+//
+//public class FrmPhucVu extends JFrame {
+//
+//    private final NhanVien nhanVien;
+//    private final PhucVuService phucVuService = new PhucVuServiceDb();
+//
+//    private static final Color RED_MAIN  = new Color(220, 38, 38);
+//    private static final Color BG_MAIN   = new Color(248, 248, 248);
+//    private static final Color TEXT_DARK = new Color(20, 20, 20);
+//    private static final Color TEXT_GRAY = new Color(120, 120, 120);
+//    private static final Color BORDER_CLR = new Color(225, 225, 225);
+//
+//    private List<BanAnModel> danhSachBan;
+//    private BanAnModel banDangChon;
+//    private JPanel pnlDanhSachBan;
+//    private JPanel pnlChiTiet;
+//    private JTable tblMon;
+//    private DefaultTableModel tblModel;
+//    
+//    // KHAI BÁO NÚT TOÀN CỤC ĐỂ ĐIỀU KHIỂN ENABLE/DISABLE
+//    private JButton btnYeuCauTT;
+//
+//    public FrmPhucVu(NhanVien nhanVien) {
+//        this.nhanVien = nhanVien;
+//        initUI();
+//        taiDanhSachBan();
+//    }
+//
+//    private void initUI() {
+//        setTitle("Phục vụ & Gọi món - Nhà Hàng Ngói Đỏ");
+//        setSize(1440, 860);
+//        setLocationRelativeTo(null);
+//        setDefaultCloseOperation(EXIT_ON_CLOSE);
+//
+//        JPanel root = new JPanel(new BorderLayout());
+//        root.setBackground(BG_MAIN);
+//        root.add(createTopBar(), BorderLayout.NORTH);
+//
+//        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+//                createLeftPanel(), createRightPanel());
+//        split.setDividerLocation(300);
+//        split.setDividerSize(1);
+//        split.setBorder(null);
+//        root.add(split, BorderLayout.CENTER);
+//        setContentPane(root);
+//    }
+//
+//    private void taiDanhSachBan() {
+//        String maBanGiu = banDangChon != null ? banDangChon.maBan : null;
+//        SwingWorker<List<BanAnModel>, Void> worker = new SwingWorker<>() {
+//            @Override protected List<BanAnModel> doInBackground() {
+//                return phucVuService.getDanhSachBanChuaThanhToan();
+//            }
+//            @Override protected void done() {
+//                try {
+//                    danhSachBan = get();
+//                    banDangChon = null;
+//                    if (maBanGiu != null && danhSachBan != null) {
+//                        for (BanAnModel b : danhSachBan) {
+//                            if (maBanGiu.equals(b.maBan)) {
+//                                banDangChon = b;
+//                                break;
+//                            }
+//                        }
+//                    }
+//                    veLaiDanhSachBan();
+//                    if (banDangChon != null) hienThiChiTietBan(banDangChon);
+//                    else hienThiGoiChonBan();
+//                } catch (Exception e) { e.printStackTrace(); }
+//            }
+//        };
+//        worker.execute();
+//    }
+//
+//    private JPanel createTopBar() {
+//        JPanel bar = new JPanel(new BorderLayout(16, 0));
+//        bar.setBackground(Color.WHITE);
+//        bar.setBorder(BorderFactory.createCompoundBorder(
+//                BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
+//                new EmptyBorder(14, 20, 14, 24)));
+//
+//        JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+//        west.setOpaque(false);
+//        JLabel btnBack = new JLabel("←");
+//        btnBack.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+//        btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+//        btnBack.addMouseListener(new MouseAdapter() {
+//            @Override public void mouseClicked(MouseEvent e) { dispose(); }
+//        });
+//        west.add(btnBack);
+//
+//        JPanel info = new JPanel();
+//        info.setOpaque(false);
+//        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+//        JLabel lbTitle = new JLabel("Phục vụ — Quản lý món theo bàn");
+//        lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+//        JLabel lbRole = new JLabel("Nhân viên: " + nhanVien.getHoTenNV());
+//        lbRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+//        lbRole.setForeground(TEXT_GRAY);
+//        info.add(lbTitle); info.add(lbRole);
+//
+//        bar.add(west, BorderLayout.WEST);
+//        bar.add(info, BorderLayout.CENTER);
+//        return bar;
+//    }
+//
+//    private JPanel createLeftPanel() {
+//        JPanel left = new JPanel(new BorderLayout());
+//        left.setBackground(Color.WHITE);
+//        left.setPreferredSize(new Dimension(300, 0));
+//        left.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER_CLR));
+//
+//        JLabel lbTitle = new JLabel("Bàn đang phục vụ");
+//        lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+//        lbTitle.setBorder(new EmptyBorder(16, 16, 12, 16));
+//
+//        pnlDanhSachBan = new JPanel();
+//        pnlDanhSachBan.setBackground(Color.WHITE);
+//        pnlDanhSachBan.setLayout(new BoxLayout(pnlDanhSachBan, BoxLayout.Y_AXIS));
+//        pnlDanhSachBan.setBorder(new EmptyBorder(0, 12, 12, 12));
+//
+//        JScrollPane scroll = new JScrollPane(pnlDanhSachBan);
+//        scroll.setBorder(null);
+//        left.add(lbTitle, BorderLayout.NORTH);
+//        left.add(scroll, BorderLayout.CENTER);
+//        return left;
+//    }
+//
+//    private void veLaiDanhSachBan() {
+//        pnlDanhSachBan.removeAll();
+//        if (danhSachBan != null) {
+//            for (BanAnModel ban : danhSachBan) {
+//                pnlDanhSachBan.add(taoTheBan(ban));
+//                pnlDanhSachBan.add(Box.createVerticalStrut(10));
+//            }
+//        }
+//        pnlDanhSachBan.revalidate(); pnlDanhSachBan.repaint();
+//    }
+//
+//    private JPanel taoTheBan(BanAnModel ban) {
+//        boolean selected = ban == banDangChon;
+//        JPanel card = new JPanel(new BorderLayout(0, 4));
+//        card.setBackground(selected ? new Color(254, 242, 242) : Color.WHITE);
+//        card.setBorder(BorderFactory.createCompoundBorder(
+//                BorderFactory.createLineBorder(selected ? RED_MAIN : BORDER_CLR, selected ? 2 : 1, true),
+//                new EmptyBorder(12, 14, 12, 14)));
+//        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+//        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+//
+//        JLabel lbBan = new JLabel(ban.tenBan);
+//        lbBan.setFont(new Font("Segoe UI", Font.BOLD, 14));
+//        JLabel lbTong = new JLabel(formatTien(ban.tamTinh) + " đ");
+//        lbTong.setFont(new Font("Segoe UI", Font.BOLD, 13));
+//        lbTong.setForeground(RED_MAIN);
+//
+//        card.add(lbBan, BorderLayout.NORTH);
+//        card.add(lbTong, BorderLayout.SOUTH);
+//
+//        card.addMouseListener(new MouseAdapter() {
+//            @Override public void mouseClicked(MouseEvent e) {
+//                banDangChon = ban;
+//                veLaiDanhSachBan();
+//                hienThiChiTietBan(ban);
+//            }
+//        });
+//        return card;
+//    }
+//
+//    private JPanel createRightPanel() {
+//        pnlChiTiet = new JPanel(new BorderLayout());
+//        pnlChiTiet.setBackground(BG_MAIN);
+//        hienThiGoiChonBan();
+//        return pnlChiTiet;
+//    }
+//
+//    private void hienThiGoiChonBan() {
+//        pnlChiTiet.removeAll();
+//        JLabel lb = new JLabel("Chọn một bàn để xem chi tiết.");
+//        lb.setHorizontalAlignment(SwingConstants.CENTER);
+//        pnlChiTiet.add(lb, BorderLayout.CENTER);
+//        pnlChiTiet.revalidate(); pnlChiTiet.repaint();
+//    }
+//
+//    private void hienThiChiTietBan(BanAnModel ban) {
+//        pnlChiTiet.removeAll();
+//        JPanel wrap = new JPanel(new BorderLayout(0, 12));
+//        wrap.setBorder(new EmptyBorder(20, 24, 20, 24));
+//        wrap.setBackground(BG_MAIN);
+//
+//        // Header
+//        JPanel header = new JPanel(new BorderLayout()); header.setOpaque(false);
+//        JLabel lbHd = new JLabel(ban.tenBan + " — HĐ " + ban.maHD);
+//        lbHd.setFont(new Font("Segoe UI", Font.BOLD, 18));
+//        header.add(lbHd, BorderLayout.WEST);
+//
+//        // Table
+//        tblModel = new DefaultTableModel(new String[]{"Mã món", "Tên món", "SL", "Đơn giá", "Thành tiền", "Trạng thái"}, 0) {
+//            @Override public boolean isCellEditable(int r, int c) { return c == 5; }
+//        };
+//        tblMon = new JTable(tblModel);
+//        tblMon.setRowHeight(35);
+//        
+//        // ComboBox trạng thái
+//        JComboBox<String> cboStatus = new JComboBox<>(new String[]{"Chưa lên", "Đã lên", "Mang về", "Hủy"});
+//        tblMon.getColumnModel().getColumn(5).setCellEditor(new DefaultCellEditor(cboStatus));
+//        
+//        // --- LOGIC KIỂM TRA NÚT THANH TOÁN ---
+//        Runnable checkNutThanhToan = () -> {
+//            boolean conMonChuaLen = false;
+//            for (int i = 0; i < tblModel.getRowCount(); i++) {
+//                if ("Chưa lên".equals(tblModel.getValueAt(i, 5))) {
+//                    conMonChuaLen = true;
+//                    break;
+//                }
+//            }
+//            if (btnYeuCauTT != null) {
+//                btnYeuCauTT.setEnabled(!conMonChuaLen);
+//                btnYeuCauTT.setBackground(conMonChuaLen ? Color.LIGHT_GRAY : RED_MAIN);
+//            }
+//        };
+//
+//        tblModel.addTableModelListener(e -> {
+//            if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 5) {
+//                String maM = (String) tblModel.getValueAt(e.getFirstRow(), 0);
+//                String ttM = (String) tblModel.getValueAt(e.getFirstRow(), 5);
+//                phucVuService.capNhatTrangThaiMon(ban.maHD, maM, ttM);
+//                checkNutThanhToan.run(); // Check lại nút ngay khi đổi trạng thái
+//            }
+//        });
+//
+//        napBangMonTuHoaDon(ban.maHD);
+//        
+//        // Ẩn cột mã món
+//        tblMon.getColumnModel().getColumn(0).setMinWidth(0);
+//        tblMon.getColumnModel().getColumn(0).setMaxWidth(0);
+//
+//        JScrollPane scroll = new JScrollPane(tblMon);
+//        scroll.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+//
+//        // Actions
+//        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+//        actions.setOpaque(false);
+//        
+//        JButton btnThem = new JButton("Thêm món");
+//        btnThem.addActionListener(e -> { moHopThoaiThemMon(ban); checkNutThanhToan.run(); });
+//
+//        btnYeuCauTT = new JButton("YÊU CẦU THANH TOÁN");
+//        btnYeuCauTT.setFont(new Font("Segoe UI", Font.BOLD, 13));
+//        btnYeuCauTT.setForeground(Color.WHITE);
+//        btnYeuCauTT.addActionListener(e -> {
+//            int c = JOptionPane.showConfirmDialog(this, "Xác nhận yêu cầu thanh toán cho " + ban.tenBan + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+//            if (c == JOptionPane.YES_OPTION) {
+//                if (phucVuService.yeuCauThanhToan(ban.maHD, ban.maBan)) {
+//                    JOptionPane.showMessageDialog(this, "✅ Đã gửi yêu cầu!");
+//                    taiDanhSachBan();
+//                }
+//            }
+//        });
+//
+//        actions.add(btnThem);
+//        actions.add(Box.createHorizontalStrut(100));
+//        actions.add(btnYeuCauTT);
+//
+//        wrap.add(header, BorderLayout.NORTH);
+//        wrap.add(scroll, BorderLayout.CENTER);
+//        wrap.add(actions, BorderLayout.SOUTH);
+//        pnlChiTiet.add(wrap, BorderLayout.CENTER);
+//        
+//        // CHẠY KIỂM TRA LẦN ĐẦU KHI MỞ BÀN
+//        checkNutThanhToan.run();
+//        
+//        pnlChiTiet.revalidate(); pnlChiTiet.repaint();
+//    }
+//
+//    private void napBangMonTuHoaDon(String maHD) {
+//        tblModel.setRowCount(0);
+//        List<MonAnModel> ds = phucVuService.getChiTietHoaDon(maHD);
+//        for (MonAnModel m : ds) {
+//            tblModel.addRow(new Object[]{m.maMonAn, m.tenMonAn, m.soLuong, formatTien(m.donGia), formatTien(m.thanhTien), m.trangThaiPhucVu});
+//        }
+//    }
+//
+//    private void moHopThoaiThemMon(BanAnModel ban) {
+//        List<MonAn> ds = phucVuService.getMonAnDangPhucVu();
+//        JComboBox<MonAn> cb = new JComboBox<>(ds.toArray(new MonAn[0]));
+//        cb.setRenderer(new DefaultListCellRenderer() {
+//            @Override public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+//                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+//                if (value instanceof MonAn x) setText(x.getTenMon());
+//                return this;
+//            }
+//        });
+//        
+//        JSpinner sp = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+//        
+//        // THÊM Ô NHẬP GHI CHÚ
+//        JTextField txtGhiChu = new JTextField();
+//        txtGhiChu.setToolTipText("Ví dụ: Không hành, ít đường...");
+//
+//        JPanel p = new JPanel(new GridLayout(0, 1, 5, 5));
+//        p.add(new JLabel("Món:")); 
+//        p.add(cb); 
+//        p.add(new JLabel("Số lượng:")); 
+//        p.add(sp);
+//        p.add(new JLabel("Ghi chú:")); 
+//        p.add(txtGhiChu); // Thêm vào giao diện popup
+//        
+//        if (JOptionPane.showConfirmDialog(this, p, "Thêm món vào " + ban.tenBan, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+//            MonAn m = (MonAn) cb.getSelectedItem();
+//            String ghiChu = txtGhiChu.getText().trim();
+//            
+//            // Gọi service lưu vào DB
+//            if (phucVuService.themHoacTangMon(ban.maHD, m.getMaMonAn(), (int)sp.getValue(), ghiChu)) {
+//                taiDanhSachBan();
+//            } else {
+//                JOptionPane.showMessageDialog(this, "Lỗi khi thêm món!");
+//            }
+//        }
+//    }
+//
+//    private static String formatTien(long so) {
+//        return NumberFormat.getInstance(new Locale("vi", "VN")).format(so);
+//    }
+//
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() -> {
+//            NhanVien nv = new NhanVien();
+//            nv.setHoTenNV("Nguyễn Văn A");
+//            new FrmPhucVu(nv).setVisible(true);
+//        });
+//    }
+//}
+package GUI;
+
+import DAO.PhucVuService;
+import DAO.PhucVuServiceDb;
+import Entity.MonAn;
+import Entity.NhanVien;
+import Model.BanAnModel;
+import Model.MonAnModel;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
+
+public class FrmPhucVu extends JFrame {
+
+	private final NhanVien nhanVien;
+	private final PhucVuService phucVuService = new PhucVuServiceDb();
+
+	private static final Color RED_MAIN = new Color(220, 38, 38);
+	private static final Color BG_MAIN = new Color(248, 248, 248);
+	private static final Color TEXT_DARK = new Color(20, 20, 20);
+	private static final Color TEXT_GRAY = new Color(120, 120, 120);
+	private static final Color BORDER_CLR = new Color(225, 225, 225);
+
+	private List<BanAnModel> danhSachBan;
+	private BanAnModel banDangChon;
+	private JPanel pnlDanhSachBan;
+	private JPanel pnlChiTiet;
+	private JTable tblMon;
+
+	private DefaultTableModel tblModel;
+
+	private JButton btnYeuCauTT;
+
+	public FrmPhucVu(NhanVien nhanVien) {
+		this.nhanVien = nhanVien;
+		initUI();
+		taiDanhSachBan();
+	}
+
+	private void initUI() {
+		setTitle("Phục vụ & Gọi món - Nhà Hàng Ngói Đỏ");
+		setSize(1440, 860);
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+		JPanel root = new JPanel(new BorderLayout());
+		root.setBackground(BG_MAIN);
+		root.add(createTopBar(), BorderLayout.NORTH);
+
+		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPanel(), createRightPanel());
+		split.setDividerLocation(300);
+		split.setDividerSize(1);
+		split.setBorder(null);
+		root.add(split, BorderLayout.CENTER);
+		setContentPane(root);
+	}
+
+	private void taiDanhSachBan() {
+		String maBanGiu = banDangChon != null ? banDangChon.maBan : null;
+		SwingWorker<List<BanAnModel>, Void> worker = new SwingWorker<>() {
+			@Override
+			protected List<BanAnModel> doInBackground() {
+				return phucVuService.getDanhSachBanChuaThanhToan();
+			}
+
+			@Override
+			protected void done() {
+				try {
+					danhSachBan = get();
+					banDangChon = null;
+					if (maBanGiu != null && danhSachBan != null) {
+						for (BanAnModel b : danhSachBan) {
+							if (maBanGiu.equals(b.maBan)) {
+								banDangChon = b;
+								break;
+							}
+						}
+					}
+					veLaiDanhSachBan();
+					if (banDangChon != null)
+						hienThiChiTietBan(banDangChon);
+					else
+						hienThiGoiChonBan();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		worker.execute();
+	}
+
+	private JPanel createTopBar() {
+		JPanel bar = new JPanel(new BorderLayout(16, 0));
+		bar.setBackground(Color.WHITE);
+		bar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
+				new EmptyBorder(14, 20, 14, 24)));
+
+		JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+		west.setOpaque(false);
+		JLabel btnBack = new JLabel("←");
+		btnBack.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+		btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnBack.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				dispose();
+			}
+		});
+		west.add(btnBack);
+
+		JPanel info = new JPanel();
+		info.setOpaque(false);
+		info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+		JLabel lbTitle = new JLabel("Phục vụ — Quản lý món theo bàn");
+		lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		JLabel lbRole = new JLabel("Nhân viên: " + nhanVien.getHoTenNV());
+		lbRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		lbRole.setForeground(TEXT_GRAY);
+		info.add(lbTitle);
+		info.add(lbRole);
+
+		bar.add(west, BorderLayout.WEST);
+		bar.add(info, BorderLayout.CENTER);
+		return bar;
+	}
+
+	private JPanel createLeftPanel() {
+		JPanel left = new JPanel(new BorderLayout());
+		left.setBackground(Color.WHITE);
+		left.setPreferredSize(new Dimension(300, 0));
+		left.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER_CLR));
+
+		JLabel lbTitle = new JLabel("Bàn đang phục vụ");
+		lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lbTitle.setBorder(new EmptyBorder(16, 16, 12, 16));
+
+		pnlDanhSachBan = new JPanel();
+		pnlDanhSachBan.setBackground(Color.WHITE);
+		pnlDanhSachBan.setLayout(new BoxLayout(pnlDanhSachBan, BoxLayout.Y_AXIS));
+		pnlDanhSachBan.setBorder(new EmptyBorder(0, 12, 12, 12));
+
+		JScrollPane scroll = new JScrollPane(pnlDanhSachBan);
+		scroll.setBorder(null);
+		left.add(lbTitle, BorderLayout.NORTH);
+		left.add(scroll, BorderLayout.CENTER);
+		return left;
+	}
+
+	private void veLaiDanhSachBan() {
+		pnlDanhSachBan.removeAll();
+		if (danhSachBan != null) {
+			for (BanAnModel ban : danhSachBan) {
+				pnlDanhSachBan.add(taoTheBan(ban));
+				pnlDanhSachBan.add(Box.createVerticalStrut(10));
+			}
+		}
+		pnlDanhSachBan.revalidate();
+		pnlDanhSachBan.repaint();
+	}
+
+	private JPanel taoTheBan(BanAnModel ban) {
+		boolean selected = ban == banDangChon;
+		JPanel card = new JPanel(new BorderLayout(0, 4));
+		card.setBackground(selected ? new Color(254, 242, 242) : Color.WHITE);
+		card.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(selected ? RED_MAIN : BORDER_CLR, selected ? 2 : 1, true),
+				new EmptyBorder(12, 14, 12, 14)));
+		card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+
+		JLabel lbBan = new JLabel(ban.tenBan);
+		lbBan.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		JLabel lbTong = new JLabel(formatTien(ban.tamTinh) + " đ");
+		lbTong.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		lbTong.setForeground(RED_MAIN);
+
+		card.add(lbBan, BorderLayout.NORTH);
+		card.add(lbTong, BorderLayout.SOUTH);
+
+		card.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				banDangChon = ban;
+				veLaiDanhSachBan();
+				hienThiChiTietBan(ban);
+			}
+		});
+		return card;
+	}
+
+	private JPanel createRightPanel() {
+		pnlChiTiet = new JPanel(new BorderLayout());
+		pnlChiTiet.setBackground(BG_MAIN);
+		hienThiGoiChonBan();
+		return pnlChiTiet;
+	}
+
+	private void hienThiGoiChonBan() {
+		pnlChiTiet.removeAll();
+		JLabel lb = new JLabel("Chọn một bàn để xem chi tiết.");
+		lb.setHorizontalAlignment(SwingConstants.CENTER);
+		pnlChiTiet.add(lb, BorderLayout.CENTER);
+		pnlChiTiet.revalidate();
+		pnlChiTiet.repaint();
+	}
+
+	private void hienThiChiTietBan(BanAnModel ban) {
+		pnlChiTiet.removeAll();
+		JPanel wrap = new JPanel(new BorderLayout(0, 12));
+		wrap.setBorder(new EmptyBorder(20, 24, 20, 24));
+		wrap.setBackground(BG_MAIN);
+
+		// Header
+		JPanel header = new JPanel(new BorderLayout());
+		header.setOpaque(false);
+		JLabel lbHd = new JLabel(ban.tenBan + " — HĐ " + ban.maHD);
+		lbHd.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		header.add(lbHd, BorderLayout.WEST);
+
+		// TABLE: Cập nhật danh sách cột (Cột 0 là ID_CTHD ẩn)
+		tblModel = new DefaultTableModel(
+				new String[] { "ID", "Mã món", "Tên món", "SL", "Đơn giá", "Thành tiền", "Trạng thái" }, 0) {
+			@Override
+			public boolean isCellEditable(int r, int c) {
+				return c == 6;
+			} // Cột trạng thái index 6
+		};
+		tblMon = new JTable(tblModel);
+		tblMon.setRowHeight(35);
+
+		// Ẩn cột ID (index 0) và Mã món (index 1)
+		tblMon.getColumnModel().getColumn(0).setMinWidth(0);
+		tblMon.getColumnModel().getColumn(0).setMaxWidth(0);
+		tblMon.getColumnModel().getColumn(1).setMinWidth(0);
+		tblMon.getColumnModel().getColumn(1).setMaxWidth(0);
+
+		// ComboBox trạng thái (Cột index 6)
+		JComboBox<String> cboStatus = new JComboBox<>(new String[] { "Chưa lên", "Đã lên", "Mang về", "Hủy" });
+		tblMon.getColumnModel().getColumn(6).setCellEditor(new DefaultCellEditor(cboStatus));
+
+		Runnable checkNutThanhToan = () -> {
+			boolean conMonChuaLen = false;
+			for (int i = 0; i < tblModel.getRowCount(); i++) {
+				if ("Chưa lên".equals(tblModel.getValueAt(i, 6))) {
+					conMonChuaLen = true;
+					break;
+				}
+			}
+			if (btnYeuCauTT != null) {
+				btnYeuCauTT.setEnabled(!conMonChuaLen);
+				btnYeuCauTT.setBackground(conMonChuaLen ? Color.LIGHT_GRAY : RED_MAIN);
+			}
+		};
+
+		// FIXED: Truyền ID (int) thay vì maHD (String)
+		tblModel.addTableModelListener(e -> {
+			if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 6) {
+				int row = e.getFirstRow();
+				// Lấy ID_CTHD từ cột 0 (đã nạp trong napBangMonTuHoaDon)
+				int idCTHD = (int) tblModel.getValueAt(row, 0);
+				String ttM = (String) tblModel.getValueAt(row, 6);
+
+				// Gọi hàm đúng kiểu (int, String)
+				phucVuService.capNhatTrangThaiMon(idCTHD, ttM);
+				checkNutThanhToan.run();
+			}
+		});
+
+		napBangMonTuHoaDon(ban.maHD);
+
+		JScrollPane scroll = new JScrollPane(tblMon);
+		scroll.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+
+		JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+		actions.setOpaque(false);
+
+		JButton btnThem = new JButton("Thêm món");
+		btnThem.addActionListener(e -> {
+			moHopThoaiThemMon(ban);
+			checkNutThanhToan.run();
+		});
+
+		btnYeuCauTT = new JButton("YÊU CẦU THANH TOÁN");
+		btnYeuCauTT.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnYeuCauTT.setForeground(Color.WHITE);
+		btnYeuCauTT.addActionListener(e -> {
+			int c = JOptionPane.showConfirmDialog(this, "Xác nhận yêu cầu thanh toán cho " + ban.tenBan + "?",
+					"Xác nhận", JOptionPane.YES_NO_OPTION);
+			if (c == JOptionPane.YES_OPTION) {
+				if (phucVuService.yeuCauThanhToan(ban.maHD, ban.maBan)) {
+					JOptionPane.showMessageDialog(this, "✅ Đã gửi yêu cầu!");
+					taiDanhSachBan();
+				}
+			}
+		});
+
+		actions.add(btnThem);
+		actions.add(Box.createHorizontalStrut(100));
+		actions.add(btnYeuCauTT);
+
+		wrap.add(header, BorderLayout.NORTH);
+		wrap.add(scroll, BorderLayout.CENTER);
+		wrap.add(actions, BorderLayout.SOUTH);
+		pnlChiTiet.add(wrap, BorderLayout.CENTER);
+
+		checkNutThanhToan.run();
+
+		pnlChiTiet.revalidate();
+		pnlChiTiet.repaint();
+	}
+
+	private void napBangMonTuHoaDon(String maHD) {
+		tblModel.setRowCount(0);
+		List<MonAnModel> ds = phucVuService.getChiTietHoaDon(maHD);
+		for (MonAnModel m : ds) {
+			// Nạp đủ các cột, bao gồm ID_CTHD ở cột đầu tiên
+			tblModel.addRow(new Object[] { m.id_cthd, // Phải đảm bảo MonAnModel có biến này
+					m.maMonAn, m.tenMonAn, m.soLuong, formatTien(m.donGia), formatTien(m.thanhTien),
+					m.trangThaiPhucVu });
+		}
+	}
+
+	private void moHopThoaiThemMon(BanAnModel ban) {
+		List<MonAn> ds = phucVuService.getMonAnDangPhucVu();
+		JComboBox<MonAn> cb = new JComboBox<>(ds.toArray(new MonAn[0]));
+		cb.setRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
+				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				if (value instanceof MonAn x)
+					setText(x.getTenMon());
+				return this;
+			}
+		});
+
+		JSpinner sp = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+		JTextField txtGhiChu = new JTextField();
+
+		JPanel p = new JPanel(new GridLayout(0, 1, 5, 5));
+		p.add(new JLabel("Món:"));
+		p.add(cb);
+		p.add(new JLabel("Số lượng:"));
+		p.add(sp);
+		p.add(new JLabel("Ghi chú:"));
+		p.add(txtGhiChu);
+
+		if (JOptionPane.showConfirmDialog(this, p, "Thêm món vào " + ban.tenBan, JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+			MonAn m = (MonAn) cb.getSelectedItem();
+			String ghiChu = txtGhiChu.getText().trim();
+
+			if (phucVuService.themHoacTangMon(ban.maHD, m.getMaMonAn(), (int) sp.getValue(), ghiChu)) {
+				taiDanhSachBan();
+			} else {
+				JOptionPane.showMessageDialog(this, "Lỗi khi thêm món!");
+			}
+		}
+	}
+
+	private static String formatTien(long so) {
+		return NumberFormat.getInstance(new Locale("vi", "VN")).format(so);
+	}
+
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			NhanVien nv = new NhanVien();
+			nv.setHoTenNV("Nguyễn Văn A");
+			new FrmPhucVu(nv).setVisible(true);
+		});
+	}
+}
