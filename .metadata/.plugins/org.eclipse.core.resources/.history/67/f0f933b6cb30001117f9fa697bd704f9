@@ -40,7 +40,6 @@ public class FrmPhucVu extends JFrame {
 	private DefaultTableModel tblModel;
 
 	private JButton btnYeuCauTT;
-	private SwingWorker<List<BanAnModel>, Void> currentWorker;
 
 	public FrmPhucVu(NhanVien nhanVien) {
 		this.nhanVien = nhanVien;
@@ -75,30 +74,26 @@ public class FrmPhucVu extends JFrame {
 	}
 
 	private void taiDanhSachBan() {
-		// Nếu có worker đang chạy thì hủy nó đi để chạy cái mới nhất
-		if (currentWorker != null && !currentWorker.isDone()) {
-			currentWorker.cancel(true);
-		}
-
-		currentWorker = new SwingWorker<>() {
+		String maBanGiu = banDangChon != null ? banDangChon.maBan : null;
+		SwingWorker<List<BanAnModel>, Void> worker = new SwingWorker<>() {
 			@Override
 			protected List<BanAnModel> doInBackground() {
+				// SỬA TẠI ĐÂY: Bạn nên có một hàm lấy danh sách bàn "Có khách" HOẶC "Đã đặt"
 				return phucVuService.getDanhSachBanCanPhucVu();
 			}
 
 			@Override
 			protected void done() {
-				if (isCancelled())
-					return;
 				try {
 					danhSachBan = get();
+					// ... (phần giữ logic chọn bàn như cũ)
 					veLaiDanhSachBan();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		};
-		currentWorker.execute();
+		worker.execute();
 	}
 
 	private JPanel createTopBar() {
@@ -159,38 +154,16 @@ public class FrmPhucVu extends JFrame {
 	}
 
 	private void veLaiDanhSachBan() {
-		// 1. Dùng SwingUtilities để đảm bảo xóa sạch giao diện cũ trên luồng UI
-		SwingUtilities.invokeLater(() -> {
-			pnlDanhSachBan.removeAll();
-
-			if (danhSachBan != null && !danhSachBan.isEmpty()) {
-				// Dùng một danh sách tạm để không vẽ trùng mã bàn (nếu SQL trả về trùng)
-				java.util.Set<String> processedIds = new java.util.HashSet<>();
-
-				for (BanAnModel ban : danhSachBan) {
-					if (!processedIds.contains(ban.maBan)) {
-						pnlDanhSachBan.add(taoTheBan(ban));
-						pnlDanhSachBan.add(Box.createVerticalStrut(10));
-						processedIds.add(ban.maBan);
-					}
-				}
+		pnlDanhSachBan.removeAll();
+		if (danhSachBan != null) {
+			for (BanAnModel ban : danhSachBan) {
+				pnlDanhSachBan.add(taoTheBan(ban));
+				pnlDanhSachBan.add(Box.createVerticalStrut(10));
 			}
-
-			pnlDanhSachBan.revalidate();
-			pnlDanhSachBan.repaint();
-		});
+		}
+		pnlDanhSachBan.revalidate();
+		pnlDanhSachBan.repaint();
 	}
-//	private void veLaiDanhSachBan() {
-//		pnlDanhSachBan.removeAll();
-//		if (danhSachBan != null) {
-//			for (BanAnModel ban : danhSachBan) {
-//				pnlDanhSachBan.add(taoTheBan(ban));
-//				pnlDanhSachBan.add(Box.createVerticalStrut(10));
-//			}
-//		}
-//		pnlDanhSachBan.revalidate();
-//		pnlDanhSachBan.repaint();
-//	}
 
 	private JPanel taoTheBan(BanAnModel ban) {
 		boolean selected = ban == banDangChon;

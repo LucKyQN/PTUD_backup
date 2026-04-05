@@ -131,107 +131,54 @@ public class HoaDonDAO {
 //	}
 
 	// 4. Thanh toán - gọi stored procedure
-//	public boolean thanhToan(String maHD, double soTienGiam, double tongTienCuoi, String maKM) {
-//		Connection con = null;
-//		try {
-//			con = connectDatabase.ConnectDB.getInstance().getConnection();
-//			con.setAutoCommit(false); // Bắt đầu Transaction để đảm bảo an toàn dữ liệu
-//
-//			// 1. Cập nhật bảng HoaDon (Trạng thái, Giờ thanh toán, Tổng tiền cuối)
-//			String sql1 = "UPDATE HoaDon SET trangThaiThanhToan = N'Đã thanh toán', "
-//					+ "ngayGioThanhToan = GETDATE(), tongTien = ? WHERE maHD = ?";
-//			PreparedStatement ps1 = con.prepareStatement(sql1);
-//			ps1.setDouble(1, tongTienCuoi);
-//			ps1.setString(2, maHD);
-//			int r1 = ps1.executeUpdate();
-//
-//			// 2. Lưu thông tin khuyến mãi vào bảng HoaDonKhuyenMai (Nếu có dùng mã)
-//			int r2 = 1; // Mặc định là 1 nếu không có KM để tránh lỗi check logic bên dưới
-//			if (maKM != null && !maKM.equals("NONE") && !maKM.isEmpty()) {
-//				String sqlKM = "INSERT INTO HoaDonKhuyenMai (maHD, maKM, giaTriGiam) VALUES (?, ?, ?)";
-//				PreparedStatement psKM = con.prepareStatement(sqlKM);
-//				psKM.setString(1, maHD);
-//				psKM.setString(2, maKM);
-//				psKM.setDouble(3, soTienGiam);
-//				r2 = psKM.executeUpdate();
-//			}
-//
-//			// 3. Giải phóng bàn ăn về trạng thái 'Trống'
-//			String sql2 = "UPDATE BanAn SET trangThai = N'Trống' "
-//					+ "WHERE maBan = (SELECT maBan FROM HoaDon WHERE maHD = ?)";
-//			PreparedStatement ps2 = con.prepareStatement(sql2);
-//			ps2.setString(1, maHD);
-//			int r3 = ps2.executeUpdate();
-//
-//			// Kiểm tra: Cả 3 bước (hoặc 2 bước nếu ko có KM) phải thành công
-//			if (r1 > 0 && r2 > 0 && r3 > 0) {
-//				con.commit(); // Lưu tất cả thay đổi
-//				System.out.println("✅ Thanh toán thành công và đã lưu thông tin Khuyến mãi!");
-//				return true;
-//			} else {
-//				con.rollback(); // Có lỗi thì hoàn tác hết
-//				return false;
-//			}
-//		} catch (SQLException e) {
-//			if (con != null)
-//				try {
-//					con.rollback();
-//				} catch (SQLException ex) {
-//				}
-//			e.printStackTrace();
-//			return false;
-//		} finally {
-//			try {
-//				if (con != null)
-//					con.setAutoCommit(true);
-//			} catch (Exception e) {
-//			}
-//		}
-//	}
-	public boolean thanhToan(String maHD, double chietKhau, String maKM) {
+	public boolean thanhToan(String maHD, double soTienGiam, double tongTienCuoi, String maKM) {
 		Connection con = null;
 		try {
 			con = connectDatabase.ConnectDB.getInstance().getConnection();
-			con.setAutoCommit(false); // Bắt đầu Transaction
+			con.setAutoCommit(false); // Bắt đầu Transaction để đảm bảo an toàn dữ liệu
 
-			// 1. Cập nhật Hóa Đơn (Đã sửa tên cột thành ngayGioThanhToan)
+			// 1. Cập nhật bảng HoaDon (Trạng thái, Giờ thanh toán, Tổng tiền cuối)
 			String sql1 = "UPDATE HoaDon SET trangThaiThanhToan = N'Đã thanh toán', "
-					+ "ngayGioThanhToan = GETDATE(), chietKhau = ?, tongTien = ? WHERE maHD = ?";
-
+					+ "ngayGioThanhToan = GETDATE(), tongTien = ? WHERE maHD = ?";
 			PreparedStatement ps1 = con.prepareStatement(sql1);
-			ps1.setDouble(1, chietKhau);
-			// Nếu không có mã khuyến mãi thì để NULL
-			ps1.setString(2, (maKM == null || maKM.equals("NONE") || maKM.isEmpty()) ? null : maKM);
-			ps1.setString(3, maHD);
+			ps1.setDouble(1, tongTienCuoi);
+			ps1.setString(2, maHD);
 			int r1 = ps1.executeUpdate();
 
-			// 2. Cập nhật trạng thái Bàn về 'Trống'
+			// 2. Lưu thông tin khuyến mãi vào bảng HoaDonKhuyenMai (Nếu có dùng mã)
+			int r2 = 1; // Mặc định là 1 nếu không có KM để tránh lỗi check logic bên dưới
+			if (maKM != null && !maKM.equals("NONE") && !maKM.isEmpty()) {
+				String sqlKM = "INSERT INTO HoaDonKhuyenMai (maHD, maKM, giaTriGiam) VALUES (?, ?, ?)";
+				PreparedStatement psKM = con.prepareStatement(sqlKM);
+				psKM.setString(1, maHD);
+				psKM.setString(2, maKM);
+				psKM.setDouble(3, soTienGiam);
+				r2 = psKM.executeUpdate();
+			}
+
+			// 3. Giải phóng bàn ăn về trạng thái 'Trống'
 			String sql2 = "UPDATE BanAn SET trangThai = N'Trống' "
 					+ "WHERE maBan = (SELECT maBan FROM HoaDon WHERE maHD = ?)";
 			PreparedStatement ps2 = con.prepareStatement(sql2);
 			ps2.setString(1, maHD);
-			int r2 = ps2.executeUpdate();
+			int r3 = ps2.executeUpdate();
 
-			// Kiểm tra logic
-			if (r1 > 0 && r2 > 0) {
-				con.commit();
-				System.out.println("✅ Thanh toán & Giải phóng bàn thành công!");
+			// Kiểm tra: Cả 3 bước (hoặc 2 bước nếu ko có KM) phải thành công
+			if (r1 > 0 && r2 > 0 && r3 > 0) {
+				con.commit(); // Lưu tất cả thay đổi
+				System.out.println("✅ Thanh toán thành công và đã lưu thông tin Khuyến mãi!");
 				return true;
 			} else {
-				con.rollback();
-				System.err.println("❌ Lỗi: Không tìm thấy hóa đơn hoặc bàn để cập nhật.");
+				con.rollback(); // Có lỗi thì hoàn tác hết
 				return false;
 			}
-
 		} catch (SQLException e) {
-			if (con != null) {
+			if (con != null)
 				try {
 					con.rollback();
 				} catch (SQLException ex) {
-					ex.printStackTrace();
 				}
-			}
-			System.err.println("SQL Error: " + e.getMessage());
+			e.printStackTrace();
 			return false;
 		} finally {
 			try {
@@ -241,6 +188,59 @@ public class HoaDonDAO {
 			}
 		}
 	}
+//	public boolean thanhToan(String maHD, double chietKhau, String maKM) {
+//		Connection con = null;
+//		try {
+//			con = connectDatabase.ConnectDB.getInstance().getConnection();
+//			con.setAutoCommit(false); // Bắt đầu Transaction
+//
+//			// 1. Cập nhật Hóa Đơn (Đã sửa tên cột thành ngayGioThanhToan)
+//			String sql1 = "UPDATE HoaDon SET trangThaiThanhToan = N'Đã thanh toán', "
+//					+ "ngayGioThanhToan = GETDATE(), chietKhau = ?, tongTien = ? WHERE maHD = ?";
+//
+//			PreparedStatement ps1 = con.prepareStatement(sql1);
+//			ps1.setDouble(1, chietKhau);
+//			// Nếu không có mã khuyến mãi thì để NULL
+//			ps1.setString(2, (maKM == null || maKM.equals("NONE") || maKM.isEmpty()) ? null : maKM);
+//			ps1.setString(3, maHD);
+//			int r1 = ps1.executeUpdate();
+//
+//			// 2. Cập nhật trạng thái Bàn về 'Trống'
+//			String sql2 = "UPDATE BanAn SET trangThai = N'Trống' "
+//					+ "WHERE maBan = (SELECT maBan FROM HoaDon WHERE maHD = ?)";
+//			PreparedStatement ps2 = con.prepareStatement(sql2);
+//			ps2.setString(1, maHD);
+//			int r2 = ps2.executeUpdate();
+//
+//			// Kiểm tra logic
+//			if (r1 > 0 && r2 > 0) {
+//				con.commit();
+//				System.out.println("✅ Thanh toán & Giải phóng bàn thành công!");
+//				return true;
+//			} else {
+//				con.rollback();
+//				System.err.println("❌ Lỗi: Không tìm thấy hóa đơn hoặc bàn để cập nhật.");
+//				return false;
+//			}
+//
+//		} catch (SQLException e) {
+//			if (con != null) {
+//				try {
+//					con.rollback();
+//				} catch (SQLException ex) {
+//					ex.printStackTrace();
+//				}
+//			}
+//			System.err.println("SQL Error: " + e.getMessage());
+//			return false;
+//		} finally {
+//			try {
+//				if (con != null)
+//					con.setAutoCommit(true);
+//			} catch (Exception e) {
+//			}
+//		}
+//	}
 
 	// 5. Hủy hóa đơn (transaction thật)
 	public boolean huyHoaDon(String maHD) {

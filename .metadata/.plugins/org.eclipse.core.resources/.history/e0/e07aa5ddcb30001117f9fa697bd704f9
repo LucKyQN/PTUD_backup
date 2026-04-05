@@ -75,30 +75,26 @@ public class FrmPhucVu extends JFrame {
 	}
 
 	private void taiDanhSachBan() {
-		// Nếu có worker đang chạy thì hủy nó đi để chạy cái mới nhất
-		if (currentWorker != null && !currentWorker.isDone()) {
-			currentWorker.cancel(true);
-		}
-
-		currentWorker = new SwingWorker<>() {
+		String maBanGiu = banDangChon != null ? banDangChon.maBan : null;
+		SwingWorker<List<BanAnModel>, Void> worker = new SwingWorker<>() {
 			@Override
 			protected List<BanAnModel> doInBackground() {
+				// SỬA TẠI ĐÂY: Bạn nên có một hàm lấy danh sách bàn "Có khách" HOẶC "Đã đặt"
 				return phucVuService.getDanhSachBanCanPhucVu();
 			}
 
 			@Override
 			protected void done() {
-				if (isCancelled())
-					return;
 				try {
 					danhSachBan = get();
+					// ... (phần giữ logic chọn bàn như cũ)
 					veLaiDanhSachBan();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		};
-		currentWorker.execute();
+		worker.execute();
 	}
 
 	private JPanel createTopBar() {

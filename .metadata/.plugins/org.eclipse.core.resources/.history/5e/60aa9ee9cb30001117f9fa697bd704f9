@@ -143,7 +143,45 @@ public class PhucVuServiceDb implements PhucVuService {
 
 		return ds;
 	}
-
+//	@Override
+//	public List<MonAnModel> getMonAnTheoBan(String maBan, String trangThai) {
+//		List<MonAnModel> ds = new ArrayList<>();
+//		String sql = "";
+//
+//		if (trangThai.equalsIgnoreCase("Có khách")) {
+//			sql = "SELECT m.maMonAn, m.tenMonAn, c.soLuong, m.giaBan, (c.soLuong * m.giaBan) as thanhTien, c.trangThaiPhucVu, c.id_cthd "
+//					+ "FROM ChiTietHoaDon c JOIN MonAn m ON c.maMonAn = m.maMonAn "
+//					+ "JOIN HoaDon h ON c.maHD = h.maHD "
+//					+ "WHERE h.maBan = ? AND h.trangThaiThanhToan = N'Chưa thanh toán'";
+//		} else {
+//			// Lấy từ Phiếu đặt nếu bàn màu vàng
+//			sql = "SELECT m.maMonAn, m.tenMonAn, c.soLuong, m.giaBan, (c.soLuong * m.giaBan) as thanhTien, N'Đã đặt trước' as trangThaiPhucVu, 0 as id_cthd "
+//					+ "FROM ChiTietPhieuDat c JOIN MonAn m ON c.maMonAn = m.maMonAn "
+//					+ "JOIN PhieuDatBan p ON c.maPhieu = p.maPhieu "
+//					+ "WHERE p.maBan = ? AND p.trangThai = N'Chờ khách'";
+//		}
+//
+//		try {
+//			Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+//			PreparedStatement ps = con.prepareStatement(sql);
+//			ps.setString(1, maBan);
+//			ResultSet rs = ps.executeQuery();
+//			while (rs.next()) {
+//				MonAnModel m = new MonAnModel();
+//				m.id_cthd = rs.getInt("id_cthd");
+//				m.maMonAn = rs.getString("maMonAn");
+//				m.tenMonAn = rs.getString("tenMonAn");
+//				m.soLuong = rs.getInt("soLuong");
+//				m.giaBan = rs.getLong("giaBan");
+//				m.thanhTien = rs.getLong("thanhTien");
+//				m.trangThaiPhucVu = rs.getString("trangThaiPhucVu");
+//				ds.add(m);
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return ds;
+//	}
 
 	@Override
 	public List<BanAnModel> getDanhSachBanCanPhucVu() {
