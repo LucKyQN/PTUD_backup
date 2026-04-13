@@ -15,8 +15,8 @@ public class PhieuDatBanDAO {
 
 	// Hàm thêm mới phiếu đặt bàn
 	public boolean taoPhieuDatBan(PhieuDatBan phieu) {
-		String sql = "INSERT INTO PhieuDatBan (maPhieu, tenKhachHang, soDienThoai, thoiGianDen, soLuongKhach, ghiChu, maBan, trangThai, ngayTao) "
-				+ "VALUES (?, ?, ?, ?, ?, ?, ?, N'Chờ khách', GETDATE())";
+		String sql = "INSERT INTO PhieuDatBan (maPhieu, tenKhachHang, soDienThoai, thoiGianDen, soLuongKhach, ghiChu, maBan, trangThai, ngayTao, tienMonDatTruoc, tienCoc) "
+				+ "VALUES (?, ?, ?, ?, ?, ?, ?, N'Chờ khách', GETDATE(), ?, ?)";
 		try {
 			Connection con = getConnection();
 			PreparedStatement ps = con.prepareStatement(sql);
@@ -28,7 +28,8 @@ public class PhieuDatBanDAO {
 			ps.setInt(5, phieu.getSoLuongKhach());
 			ps.setString(6, phieu.getGhiChu());
 			ps.setString(7, phieu.getMaBan());
-
+			ps.setDouble(8, phieu.getTienMonDatTruoc());
+			ps.setDouble(9, phieu.getTienCoc());
 			int rows = ps.executeUpdate();
 			ps.close();
 			return rows > 0;
@@ -60,6 +61,8 @@ public class PhieuDatBanDAO {
 				p.setTrangThai(rs.getString("trangThai"));
 				// Lấy thêm tên bàn từ câu JOIN
 				p.setTenBan(rs.getString("tenBan"));
+				p.setTienMonDatTruoc(rs.getDouble("tienMonDatTruoc"));
+				p.setTienCoc(rs.getDouble("tienCoc"));
 				list.add(p);
 			}
 		} catch (Exception e) {

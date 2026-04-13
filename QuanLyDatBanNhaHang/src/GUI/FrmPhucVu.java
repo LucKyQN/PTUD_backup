@@ -1,4 +1,3 @@
-
 package GUI;
 
 import DAO.PhucVuService;
@@ -12,7 +11,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,15 +38,15 @@ public class FrmPhucVu extends JFrame {
 	private DefaultTableModel tblModel;
 
 	private JButton btnYeuCauTT;
+	private JButton btnThemMon;
 	private SwingWorker<List<BanAnModel>, Void> currentWorker;
 
 	public FrmPhucVu(NhanVien nhanVien) {
 		this.nhanVien = nhanVien;
 		initUI();
 		taiDanhSachBan();
-		// Trong Constructor FrmPhucVu
+
 		Timer timer = new Timer(5000, e -> {
-			// Nếu bạn không đang mở cái ComboBox thì mới cho phép load lại
 			if (tblMon != null && !tblMon.isEditing()) {
 				taiDanhSachBan();
 			}
@@ -75,7 +73,6 @@ public class FrmPhucVu extends JFrame {
 	}
 
 	private void taiDanhSachBan() {
-		// Nếu có worker đang chạy thì hủy nó đi để chạy cái mới nhất
 		if (currentWorker != null && !currentWorker.isDone()) {
 			currentWorker.cancel(true);
 		}
@@ -109,6 +106,7 @@ public class FrmPhucVu extends JFrame {
 
 		JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
 		west.setOpaque(false);
+
 		JLabel btnBack = new JLabel("←");
 		btnBack.setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -123,11 +121,14 @@ public class FrmPhucVu extends JFrame {
 		JPanel info = new JPanel();
 		info.setOpaque(false);
 		info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+
 		JLabel lbTitle = new JLabel("Phục vụ — Quản lý món theo bàn");
 		lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
 		JLabel lbRole = new JLabel("Nhân viên: " + nhanVien.getHoTenNV());
 		lbRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 		lbRole.setForeground(TEXT_GRAY);
+
 		info.add(lbTitle);
 		info.add(lbRole);
 
@@ -153,18 +154,17 @@ public class FrmPhucVu extends JFrame {
 
 		JScrollPane scroll = new JScrollPane(pnlDanhSachBan);
 		scroll.setBorder(null);
+
 		left.add(lbTitle, BorderLayout.NORTH);
 		left.add(scroll, BorderLayout.CENTER);
 		return left;
 	}
 
 	private void veLaiDanhSachBan() {
-		// 1. Dùng SwingUtilities để đảm bảo xóa sạch giao diện cũ trên luồng UI
 		SwingUtilities.invokeLater(() -> {
 			pnlDanhSachBan.removeAll();
 
 			if (danhSachBan != null && !danhSachBan.isEmpty()) {
-				// Dùng một danh sách tạm để không vẽ trùng mã bàn (nếu SQL trả về trùng)
 				java.util.Set<String> processedIds = new java.util.HashSet<>();
 
 				for (BanAnModel ban : danhSachBan) {
@@ -180,26 +180,10 @@ public class FrmPhucVu extends JFrame {
 			pnlDanhSachBan.repaint();
 		});
 	}
-//	private void veLaiDanhSachBan() {
-//		pnlDanhSachBan.removeAll();
-//		if (danhSachBan != null) {
-//			for (BanAnModel ban : danhSachBan) {
-//				pnlDanhSachBan.add(taoTheBan(ban));
-//				pnlDanhSachBan.add(Box.createVerticalStrut(10));
-//			}
-//		}
-//		pnlDanhSachBan.revalidate();
-//		pnlDanhSachBan.repaint();
-//	}
 
 	private JPanel taoTheBan(BanAnModel ban) {
 		boolean selected = ban == banDangChon;
 
-		Color colorStatus = BORDER_CLR;
-		if (ban.trangThai.equalsIgnoreCase("Có khách"))
-			colorStatus = RED_MAIN;
-		else if (ban.trangThai.equalsIgnoreCase("Đã đặt"))
-			colorStatus = new Color(234, 179, 8); // Màu vàng
 		JPanel card = new JPanel(new BorderLayout(0, 4));
 		card.setBackground(selected ? new Color(254, 242, 242) : Color.WHITE);
 		card.setBorder(BorderFactory.createCompoundBorder(
@@ -210,6 +194,7 @@ public class FrmPhucVu extends JFrame {
 
 		JLabel lbBan = new JLabel(ban.tenBan);
 		lbBan.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
 		JLabel lbTong = new JLabel(formatTien(ban.tamTinh) + " đ");
 		lbTong.setFont(new Font("Segoe UI", Font.BOLD, 13));
 		lbTong.setForeground(RED_MAIN);
@@ -246,59 +231,79 @@ public class FrmPhucVu extends JFrame {
 
 	private void hienThiChiTietBan(BanAnModel ban) {
 		pnlChiTiet.removeAll();
+
 		JPanel wrap = new JPanel(new BorderLayout(0, 12));
 		wrap.setBorder(new EmptyBorder(20, 24, 20, 24));
 		wrap.setBackground(BG_MAIN);
 
-		// Header
 		JPanel header = new JPanel(new BorderLayout());
 		header.setOpaque(false);
-		JLabel lbHd = new JLabel(ban.tenBan + " — HĐ " + ban.maHD);
+		JLabel lbHd = new JLabel(ban.tenBan + " — HĐ " + (ban.maHD == null ? "---" : ban.maHD));
 		lbHd.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		header.add(lbHd, BorderLayout.WEST);
 
-		// TABLE: Cập nhật danh sách cột (Cột 0 là ID_CTHD ẩn)
 		tblModel = new DefaultTableModel(
 				new String[] { "ID", "Mã món", "Tên món", "SL", "Đơn giá", "Thành tiền", "Trạng thái" }, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
-				return c == 6;
-			} // Cột trạng thái index 6
+				return c == 6 && !"Chờ thanh toán".equalsIgnoreCase(ban.trangThai);
+			}
 		};
+
 		tblMon = new JTable(tblModel);
 		tblMon.setRowHeight(35);
 		tblMon.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-		// Ẩn cột ID (index 0) và Mã món (index 1)
+
 		tblMon.getColumnModel().getColumn(0).setMinWidth(0);
 		tblMon.getColumnModel().getColumn(0).setMaxWidth(0);
 		tblMon.getColumnModel().getColumn(1).setMinWidth(0);
 		tblMon.getColumnModel().getColumn(1).setMaxWidth(0);
 
-		// ComboBox trạng thái (Cột index 6)
 		JComboBox<String> cboStatus = new JComboBox<>(new String[] { "Chưa lên", "Đã lên", "Mang về", "Hủy" });
 		tblMon.getColumnModel().getColumn(6).setCellEditor(new DefaultCellEditor(cboStatus));
 
+		btnYeuCauTT = new JButton("YÊU CẦU THANH TOÁN");
+		btnYeuCauTT.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnYeuCauTT.setForeground(Color.WHITE);
+		btnYeuCauTT.setFocusPainted(false);
+		btnYeuCauTT.setBorderPainted(false);
+
+		btnThemMon = new JButton("Thêm món");
+		btnThemMon.setFocusPainted(false);
+
 		Runnable checkNutThanhToan = () -> {
 			boolean conMonChuaLen = false;
+
 			for (int i = 0; i < tblModel.getRowCount(); i++) {
-				if ("Chưa lên".equals(tblModel.getValueAt(i, 6))) {
+				Object obj = tblModel.getValueAt(i, 6);
+				String trangThai = obj == null ? "" : obj.toString().trim();
+				if ("Chưa lên".equalsIgnoreCase(trangThai)) {
 					conMonChuaLen = true;
 					break;
 				}
 			}
+
+			boolean choThanhToan = "Chờ thanh toán".equalsIgnoreCase(ban.trangThai);
+
 			if (btnYeuCauTT != null) {
-				btnYeuCauTT.setEnabled(!conMonChuaLen);
-				btnYeuCauTT.setBackground(conMonChuaLen ? Color.LIGHT_GRAY : RED_MAIN);
+				boolean enable = !conMonChuaLen && !choThanhToan && tblModel.getRowCount() > 0;
+				btnYeuCauTT.setEnabled(enable);
+				btnYeuCauTT.setBackground(enable ? RED_MAIN : Color.LIGHT_GRAY);
+				btnYeuCauTT.setForeground(enable ? Color.WHITE : Color.DARK_GRAY);
+			}
+
+			if (btnThemMon != null) {
+				boolean enableThem = !choThanhToan;
+				btnThemMon.setEnabled(enableThem);
+				btnThemMon.setBackground(enableThem ? null : Color.LIGHT_GRAY);
+				btnThemMon.setForeground(enableThem ? null : Color.DARK_GRAY);
 			}
 		};
 
 		tblModel.addTableModelListener(e -> {
-			// Chỉ xử lý khi người dùng CẬP NHẬT (UPDATE) dữ liệu ở cột Trạng thái (Cột số
-			// 6)
 			if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 6) {
 				int row = e.getFirstRow();
 
-				// 1. Lấy ID_CTHD (Phải ở cột 0 và phải có giá trị)
 				Object idObj = tblModel.getValueAt(row, 0);
 				if (idObj == null) {
 					System.err.println("LỖI: Cột ID đang bị trống (null)!");
@@ -306,20 +311,18 @@ public class FrmPhucVu extends JFrame {
 				}
 
 				int idCTHD = Integer.parseInt(idObj.toString());
-				String ttMoi = (String) tblModel.getValueAt(row, 6);
+				String ttMoi = String.valueOf(tblModel.getValueAt(row, 6));
 
-				System.out.println(">>> Thực hiện cập nhật ID: " + idCTHD + " -> " + ttMoi);
-
-				// 2. Gọi Service để lưu xuống SQL
 				boolean success = phucVuService.capNhatTrangThaiMon(idCTHD, ttMoi);
 
 				if (success) {
-					System.out.println("✅ SQL: Cập nhật thành công!");
+					SwingUtilities.invokeLater(checkNutThanhToan);
 				} else {
-					System.err.println("❌ SQL: Cập nhật thất bại (Kiểm tra câu lệnh UPDATE trong DAO)!");
+					System.err.println("❌ SQL: Cập nhật trạng thái thất bại!");
 				}
 			}
 		});
+
 		napBangMonTuHoaDon(ban.maHD);
 
 		JScrollPane scroll = new JScrollPane(tblMon);
@@ -328,27 +331,48 @@ public class FrmPhucVu extends JFrame {
 		JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
 		actions.setOpaque(false);
 
-		JButton btnThem = new JButton("Thêm món");
-		btnThem.addActionListener(e -> {
-			moHopThoaiThemMon(ban);
-			checkNutThanhToan.run();
+		btnThemMon.addActionListener(e -> {
+			if ("Chờ thanh toán".equalsIgnoreCase(ban.trangThai)) {
+				JOptionPane.showMessageDialog(this, "Bàn này đã yêu cầu thanh toán, không thể thêm món nữa.",
+						"Không thể thêm món", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			boolean daThem = moHopThoaiThemNhieuMon(ban);
+			if (daThem) {
+				napBangMonTuHoaDon(ban.maHD);
+				tblModel.fireTableDataChanged();
+				SwingUtilities.invokeLater(checkNutThanhToan);
+				taiDanhSachBan();
+			}
 		});
 
-		btnYeuCauTT = new JButton("YÊU CẦU THANH TOÁN");
-		btnYeuCauTT.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		btnYeuCauTT.setForeground(Color.WHITE);
 		btnYeuCauTT.addActionListener(e -> {
 			int c = JOptionPane.showConfirmDialog(this, "Xác nhận yêu cầu thanh toán cho " + ban.tenBan + "?",
 					"Xác nhận", JOptionPane.YES_NO_OPTION);
+
 			if (c == JOptionPane.YES_OPTION) {
 				if (phucVuService.yeuCauThanhToan(ban.maHD, ban.maBan)) {
 					JOptionPane.showMessageDialog(this, "✅ Đã gửi yêu cầu!");
+					ban.trangThai = "Chờ thanh toán";
+
+					btnThemMon.setEnabled(false);
+					btnThemMon.setBackground(Color.LIGHT_GRAY);
+					btnThemMon.setForeground(Color.DARK_GRAY);
+
+					btnYeuCauTT.setEnabled(false);
+					btnYeuCauTT.setBackground(Color.LIGHT_GRAY);
+					btnYeuCauTT.setForeground(Color.DARK_GRAY);
+
+					napBangMonTuHoaDon(ban.maHD);
+					tblModel.fireTableDataChanged();
+					SwingUtilities.invokeLater(checkNutThanhToan);
 					taiDanhSachBan();
 				}
 			}
 		});
 
-		actions.add(btnThem);
+		actions.add(btnThemMon);
 		actions.add(Box.createHorizontalStrut(100));
 		actions.add(btnYeuCauTT);
 
@@ -366,12 +390,7 @@ public class FrmPhucVu extends JFrame {
 	private void napBangMonTuHoaDon(String maHD) {
 		tblModel.setRowCount(0);
 
-		// Gọi hàm DAO mà chúng ta đã bàn ở trên: getMonAnTheoBan
-		// Bạn cần truyền thêm TrangThai của bàn vào đây
-		String trangThai = banDangChon.trangThai; // Đảm bảo BanAnModel có trường trangThai
-
-		// Lưu ý: Nếu maHD của bàn "Đã đặt" đang bị null, hãy truyền maBan vào để tìm
-		// theo Phiếu đặt
+		String trangThai = banDangChon.trangThai;
 		List<MonAnModel> ds = phucVuService.getMonAnTheoBan(banDangChon.maBan, trangThai);
 
 		for (MonAnModel m : ds) {
@@ -380,48 +399,156 @@ public class FrmPhucVu extends JFrame {
 		}
 	}
 
-	private void moHopThoaiThemMon(BanAnModel ban) {
+	private boolean moHopThoaiThemNhieuMon(BanAnModel ban) {
 		if (ban.maHD == null || ban.maHD.trim().isEmpty()) {
 			JOptionPane.showMessageDialog(this,
 					"Bàn " + ban.tenBan + " chưa có hóa đơn (có thể là khách đặt trước).\n"
 							+ "Vui lòng liên hệ Lễ Tân Check-in để có Mã HD trước khi thêm món!",
 					"Không tìm thấy Hóa Đơn", JOptionPane.WARNING_MESSAGE);
-			return;
+			return false;
 		}
-		List<MonAn> ds = phucVuService.getMonAnDangPhucVu();
-		JComboBox<MonAn> cb = new JComboBox<>(ds.toArray(new MonAn[0]));
-		cb.setRenderer(new DefaultListCellRenderer() {
+
+		if ("Chờ thanh toán".equalsIgnoreCase(ban.trangThai)) {
+			JOptionPane.showMessageDialog(this, "Bàn này đã yêu cầu thanh toán, không thể thêm món nữa.",
+					"Không thể thêm món", JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+
+		List<MonAn> dsMon = phucVuService.getMonAnDangPhucVu();
+
+		DefaultListModel<MonAn> listModel = new DefaultListModel<>();
+		for (MonAn mon : dsMon) {
+			listModel.addElement(mon);
+		}
+
+		JList<MonAn> listMon = new JList<>(listModel);
+		listMon.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		listMon.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus) {
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-				if (value instanceof MonAn x)
-					setText(x.getTenMon());
+				if (value instanceof MonAn m) {
+					setText(m.getTenMon() + " - " + formatTien((long) m.getGiaMon()) + " đ");
+				}
 				return this;
 			}
 		});
 
-		JSpinner sp = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+		DefaultTableModel modelTam = new DefaultTableModel(
+				new String[] { "Mã món", "Tên món", "SL", "Đơn giá", "Ghi chú" }, 0) {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return column == 2 || column == 4;
+			}
+		};
+
+		JTable tblTam = new JTable(modelTam);
+		tblTam.setRowHeight(28);
+		tblTam.getColumnModel().getColumn(0).setMinWidth(0);
+		tblTam.getColumnModel().getColumn(0).setMaxWidth(0);
+		tblTam.getColumnModel().getColumn(0).setWidth(0);
+
+		JSpinner spSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
 		JTextField txtGhiChu = new JTextField();
 
-		JPanel p = new JPanel(new GridLayout(0, 1, 5, 5));
-		p.add(new JLabel("Món:"));
-		p.add(cb);
-		p.add(new JLabel("Số lượng:"));
-		p.add(sp);
-		p.add(new JLabel("Ghi chú:"));
-		p.add(txtGhiChu);
+		JButton btnThemVaoDS = new JButton("Thêm vào danh sách");
+		btnThemVaoDS.addActionListener(e -> {
+			MonAn mon = listMon.getSelectedValue();
+			if (mon == null) {
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn món.");
+				return;
+			}
 
-		if (JOptionPane.showConfirmDialog(this, p, "Thêm món vào " + ban.tenBan, JOptionPane.OK_CANCEL_OPTION,
-				JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-			MonAn m = (MonAn) cb.getSelectedItem();
+			int soLuong = (int) spSoLuong.getValue();
 			String ghiChu = txtGhiChu.getText().trim();
 
-			if (phucVuService.themHoacTangMon(ban.maHD, m.getMaMonAn(), (int) sp.getValue(), ghiChu)) {
-				taiDanhSachBan();
-			} else {
-				JOptionPane.showMessageDialog(this, "Lỗi khi thêm món!");
+			boolean daCo = false;
+			for (int i = 0; i < modelTam.getRowCount(); i++) {
+				String maMon = modelTam.getValueAt(i, 0).toString();
+				String ghiChuCu = modelTam.getValueAt(i, 4) == null ? "" : modelTam.getValueAt(i, 4).toString();
+
+				if (maMon.equals(mon.getMaMonAn()) && ghiChuCu.equals(ghiChu)) {
+					int slCu = Integer.parseInt(modelTam.getValueAt(i, 2).toString());
+					modelTam.setValueAt(slCu + soLuong, i, 2);
+					daCo = true;
+					break;
+				}
 			}
+
+			if (!daCo) {
+				modelTam.addRow(
+						new Object[] { mon.getMaMonAn(), mon.getTenMon(), soLuong, (long) mon.getGiaMon(), ghiChu });
+			}
+
+			spSoLuong.setValue(1);
+			txtGhiChu.setText("");
+		});
+
+		JButton btnXoaDong = new JButton("Xóa món đã chọn");
+		btnXoaDong.addActionListener(e -> {
+			int row = tblTam.getSelectedRow();
+			if (row >= 0) {
+				modelTam.removeRow(row);
+			}
+		});
+
+		JPanel left = new JPanel(new BorderLayout(0, 8));
+		left.add(new JLabel("Danh sách món"), BorderLayout.NORTH);
+		left.add(new JScrollPane(listMon), BorderLayout.CENTER);
+
+		JPanel addBox = new JPanel(new GridLayout(0, 1, 6, 6));
+		addBox.add(new JLabel("Số lượng:"));
+		addBox.add(spSoLuong);
+		addBox.add(new JLabel("Ghi chú:"));
+		addBox.add(txtGhiChu);
+		addBox.add(btnThemVaoDS);
+		left.add(addBox, BorderLayout.SOUTH);
+
+		JPanel right = new JPanel(new BorderLayout(0, 8));
+		right.add(new JLabel("Món sẽ thêm vào bàn"), BorderLayout.NORTH);
+		right.add(new JScrollPane(tblTam), BorderLayout.CENTER);
+		right.add(btnXoaDong, BorderLayout.SOUTH);
+
+		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
+		split.setDividerLocation(320);
+		split.setResizeWeight(0.45);
+
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setPreferredSize(new Dimension(820, 420));
+		panel.add(split, BorderLayout.CENTER);
+
+		int result = JOptionPane.showConfirmDialog(this, panel, "Thêm món cho " + ban.tenBan,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result != JOptionPane.OK_OPTION) {
+			return false;
+		}
+
+		if (modelTam.getRowCount() == 0) {
+			JOptionPane.showMessageDialog(this, "Bạn chưa thêm món nào.");
+			return false;
+		}
+
+		boolean allOk = true;
+
+		for (int i = 0; i < modelTam.getRowCount(); i++) {
+			String maMonAn = modelTam.getValueAt(i, 0).toString();
+			int soLuong = Integer.parseInt(modelTam.getValueAt(i, 2).toString());
+			String ghiChu = modelTam.getValueAt(i, 4) == null ? "" : modelTam.getValueAt(i, 4).toString();
+
+			boolean ok = phucVuService.themHoacTangMon(ban.maHD, maMonAn, soLuong, ghiChu);
+			if (!ok) {
+				allOk = false;
+				break;
+			}
+		}
+
+		if (allOk) {
+			return true;
+		} else {
+			JOptionPane.showMessageDialog(this, "Có lỗi khi thêm món vào hóa đơn!");
+			return false;
 		}
 	}
 

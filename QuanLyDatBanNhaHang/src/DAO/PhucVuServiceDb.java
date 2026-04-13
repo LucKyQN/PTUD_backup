@@ -1,3 +1,4 @@
+
 package DAO;
 
 import Entity.MonAn;
@@ -10,6 +11,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import connectDatabase.ConnectDB;
 import javax.swing.JOptionPane;
 
@@ -22,61 +24,169 @@ public class PhucVuServiceDb implements PhucVuService {
 	public List<BanAnModel> getDanhSachBanChuaThanhToan() {
 		List<BanAnModel> list = new ArrayList<>();
 
-		// SỬA SQL: Đảm bảo lấy bàn dựa trên trạng thái của BÀN AN trước
-		String sql = "SELECT b.maBan, b.tenBan, b.sucChua, h.maHD, "
-				+ "       (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD AND trangThaiPhucVu != N'Hủy') as tamTinh "
-				+ "FROM BanAn b "
+		String sql = "SELECT b.maBan, b.tenBan, b.sucChua, h.maHD, " + "       (SELECT ISNULL(SUM(thanhTien), 0) "
+				+ "        FROM ChiTietHoaDon "
+				+ "        WHERE maHD = h.maHD AND trangThaiPhucVu != N'Hủy') AS tamTinh " + "FROM BanAn b "
 				+ "LEFT JOIN HoaDon h ON b.maBan = h.maBan AND h.trangThaiThanhToan != N'Đã thanh toán' "
 				+ "WHERE b.trangThai IN (N'Có khách', N'Chờ thanh toán')";
-		// Câu WHERE này bám sát trạng thái bạn thấy trong DB
 
 		try {
-			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-			java.sql.PreparedStatement ps = con.prepareStatement(sql);
-			java.sql.ResultSet rs = ps.executeQuery();
+			Connection con = ConnectDB.getInstance().getConnection();
+			PreparedStatement ps = con.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+
 			while (rs.next()) {
 				BanAnModel ban = new BanAnModel();
 				ban.maBan = rs.getString("maBan");
 				ban.tenBan = rs.getString("tenBan");
 				ban.sucChua = rs.getInt("sucChua");
-				ban.maHD = rs.getString("maHD"); // Nếu NULL thì phục vụ sẽ biết bàn chưa có HD
+				ban.maHD = rs.getString("maHD");
 				ban.tamTinh = (long) rs.getDouble("tamTinh");
 				list.add(ban);
 			}
+
+			rs.close();
+			ps.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return list;
 	}
 
+	private boolean hoaDonDangChoThanhToan(String maHD) {
+		String sql = "SELECT trangThaiThanhToan FROM HoaDon WHERE maHD = ?";
+		try {
+			Connection con = ConnectDB.getInstance().getConnection();
+			PreparedStatement ps = con.prepareStatement(sql);
+			ps.setString(1, maHD);
+			ResultSet rs = ps.executeQuery();
+
+			boolean ketQua = false;
+			if (rs.next()) {
+				String trangThai = rs.getString("trangThaiThanhToan");
+				ketQua = "Chờ thanh toán".equalsIgnoreCase(trangThai);
+			}
+
+			rs.close();
+			ps.close();
+			return ketQua;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 	@Override
 	public boolean themHoacTangMon(String maHD, String maMonAn, int sl, String ghiChu) {
-		// Kiểm tra thủ công một lần nữa trước khi gửi xuống SQL
-		if (maHD == null || maHD.isEmpty()) {
+		if (maHD == null || maHD.trim().isEmpty()) {
 			System.err.println("LỖI: maHD truyền vào bị NULL!");
 			return false;
 		}
 
-		// Câu lệnh SQL của bạn (giữ nguyên hoặc dùng tham số giaBan chính xác)
-		String sql = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu, ghiChu) "
-				+ "SELECT ?, ?, ?, giaBan, giaBan * ?, N'Chưa lên', ? " + "FROM MonAn WHERE maMonAn = ?";
+		if (hoaDonDangChoThanhToan(maHD)) {
+			JOptionPane.showMessageDialog(null,
+					"Hóa đơn này đang ở trạng thái chờ thanh toán,\nkhông thể thêm món nữa.");
+			return false;
+		}
 
+		Connection con = null;
 		try {
-			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-			java.sql.PreparedStatement ps = con.prepareStatement(sql);
+			con = ConnectDB.getInstance().getConnection();
+			con.setAutoCommit(false);
 
-			ps.setString(1, maHD); // <--- Đảm bảo cái này không null
-			ps.setString(2, maMonAn);
-			ps.setInt(3, sl);
-			ps.setInt(4, sl);
-			ps.setString(5, (ghiChu == null) ? "" : ghiChu); // Tránh null ghiChu
-			ps.setString(6, maMonAn);
+			String sqlCheck = "SELECT ID_CTHD, soLuong, donGia " + "FROM ChiTietHoaDon "
+					+ "WHERE maHD = ? AND maMonAn = ? " + "AND ISNULL(ghiChu, '') = ISNULL(?, '') "
+					+ "AND ISNULL(trangThaiPhucVu, N'Chưa lên') != N'Hủy'";
 
-			int result = ps.executeUpdate();
-			return result > 0;
+			PreparedStatement psCheck = con.prepareStatement(sqlCheck);
+			psCheck.setString(1, maHD);
+			psCheck.setString(2, maMonAn);
+			psCheck.setString(3, ghiChu == null ? "" : ghiChu);
+			ResultSet rs = psCheck.executeQuery();
+
+			boolean tonTai = false;
+			int soLuongCu = 0;
+			long donGia = 0;
+
+			if (rs.next()) {
+				tonTai = true;
+				soLuongCu = rs.getInt("soLuong");
+				donGia = (long) rs.getDouble("donGia");
+			}
+
+			rs.close();
+			psCheck.close();
+
+			if (tonTai) {
+				String sqlUpdate = "UPDATE ChiTietHoaDon " + "SET soLuong = ?, thanhTien = ? "
+						+ "WHERE maHD = ? AND maMonAn = ? AND ISNULL(ghiChu, '') = ISNULL(?, '') "
+						+ "AND ISNULL(trangThaiPhucVu, N'Chưa lên') != N'Hủy'";
+
+				int soLuongMoi = soLuongCu + sl;
+				PreparedStatement psUpdate = con.prepareStatement(sqlUpdate);
+				psUpdate.setInt(1, soLuongMoi);
+				psUpdate.setLong(2, soLuongMoi * donGia);
+				psUpdate.setString(3, maHD);
+				psUpdate.setString(4, maMonAn);
+				psUpdate.setString(5, ghiChu == null ? "" : ghiChu);
+
+				if (psUpdate.executeUpdate() <= 0) {
+					psUpdate.close();
+					con.rollback();
+					return false;
+				}
+				psUpdate.close();
+
+			} else {
+				String sqlInsert = "INSERT INTO ChiTietHoaDon "
+						+ "(maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu, ghiChu) "
+						+ "SELECT ?, ?, ?, giaBan, giaBan * ?, N'Chưa lên', ? " + "FROM MonAn WHERE maMonAn = ?";
+
+				PreparedStatement psInsert = con.prepareStatement(sqlInsert);
+				psInsert.setString(1, maHD);
+				psInsert.setString(2, maMonAn);
+				psInsert.setInt(3, sl);
+				psInsert.setInt(4, sl);
+				psInsert.setString(5, ghiChu == null ? "" : ghiChu);
+				psInsert.setString(6, maMonAn);
+
+				if (psInsert.executeUpdate() <= 0) {
+					psInsert.close();
+					con.rollback();
+					return false;
+				}
+				psInsert.close();
+			}
+
+			PreparedStatement psTong = con.prepareStatement("UPDATE HoaDon "
+					+ "SET tongTien = (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = ?) "
+					+ "WHERE maHD = ?");
+			psTong.setString(1, maHD);
+			psTong.setString(2, maHD);
+			psTong.executeUpdate();
+			psTong.close();
+
+			con.commit();
+			return true;
+
 		} catch (Exception e) {
+			try {
+				if (con != null) {
+					con.rollback();
+				}
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
 			JOptionPane.showMessageDialog(null, "Lỗi SQL: " + e.getMessage());
 			return false;
+		} finally {
+			try {
+				if (con != null) {
+					con.setAutoCommit(true);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -100,12 +210,12 @@ public class PhucVuServiceDb implements PhucVuService {
 		List<MonAnModel> ds = new ArrayList<>();
 		String sql = "";
 
-		if (trangThai.equalsIgnoreCase("Có khách")) {
+		if (trangThai.equalsIgnoreCase("Có khách") || trangThai.equalsIgnoreCase("Chờ thanh toán")) {
 			sql = "SELECT m.maMonAn, m.tenMonAn, " + "       c.soLuong, c.donGia, c.thanhTien, "
 					+ "       ISNULL(c.trangThaiPhucVu, N'Chưa lên') AS trangThaiPhucVu, "
 					+ "       c.ID_CTHD AS id_cthd " + "FROM ChiTietHoaDon c "
 					+ "JOIN MonAn m ON c.maMonAn = m.maMonAn " + "JOIN HoaDon h ON c.maHD = h.maHD "
-					+ "WHERE h.maBan = ? " + "  AND h.trangThaiThanhToan = N'Chưa thanh toán'";
+					+ "WHERE h.maBan = ? " + "  AND h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán')";
 		} else if (trangThai.equalsIgnoreCase("Đã đặt")) {
 			sql = "SELECT m.maMonAn, m.tenMonAn, "
 					+ "       ct.soLuong, ct.donGia, (ct.soLuong * ct.donGia) AS thanhTien, "
@@ -118,7 +228,7 @@ public class PhucVuServiceDb implements PhucVuService {
 		}
 
 		try {
-			Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+			Connection con = ConnectDB.getInstance().getConnection();
 			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, maBan);
 			ResultSet rs = ps.executeQuery();
@@ -144,58 +254,64 @@ public class PhucVuServiceDb implements PhucVuService {
 		return ds;
 	}
 
-
 	@Override
 	public List<BanAnModel> getDanhSachBanCanPhucVu() {
 		List<BanAnModel> ds = new ArrayList<>();
-		// Câu SQL này sẽ tính tổng tiền (TamTinh) ngay lập tức từ bảng ChiTietHoaDon
+
 		String sql = "SELECT b.maBan, b.tenBan, b.trangThai, h.maHD, "
 				+ "ISNULL((SELECT SUM(thanhTien) FROM ChiTietHoaDon WHERE maHD = h.maHD), 0) as TamTinh "
-				+ "FROM BanAn b "
-				+ "LEFT JOIN HoaDon h ON b.maBan = h.maBan AND h.trangThaiThanhToan = N'Chưa thanh toán' "
-				+ "WHERE b.trangThai IN (N'Có khách', N'Đã đặt')";
+				+ "FROM BanAn b " + "LEFT JOIN HoaDon h ON b.maBan = h.maBan "
+				+ "   AND h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') "
+				+ "WHERE b.trangThai IN (N'Có khách', N'Đã đặt', N'Chờ thanh toán')";
+
 		try {
-			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-			java.sql.PreparedStatement ps = con.prepareStatement(sql);
-			java.sql.ResultSet rs = ps.executeQuery();
+			Connection con = ConnectDB.getInstance().getConnection();
+			PreparedStatement ps = con.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+
 			while (rs.next()) {
 				BanAnModel b = new BanAnModel();
 				b.maBan = rs.getString("maBan");
 				b.tenBan = rs.getString("tenBan");
 				b.trangThai = rs.getString("trangThai");
 				b.maHD = rs.getString("maHD");
-				b.tamTinh = rs.getLong("TamTinh"); // <--- DÒNG NÀY SẼ LẤY SỐ TIỀN THẬT
+				b.tamTinh = rs.getLong("TamTinh");
 				ds.add(b);
 			}
+
+			rs.close();
+			ps.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return ds;
 	}
 
-	// SỬA HÀM NÀY: Thêm cột trangThaiPhucVu vào câu SELECT
 	@Override
 	public List<MonAnModel> getChiTietHoaDon(String maHD) {
 		List<MonAnModel> list = new ArrayList<>();
-		String sql = "SELECT ct.ID_CTHD, ct.maMonAn, m.tenMonAn, ct.soLuong, ct.donGia, ct.thanhTien, ISNULL(ct.trangThaiPhucVu, N'Chưa lên') as trangThaiPhucVu "
-				+ "FROM ChiTietHoaDon ct JOIN MonAn m ON ct.maMonAn = m.maMonAn WHERE ct.maHD = ?";
+		String sql = "SELECT ct.ID_CTHD, ct.maMonAn, m.tenMonAn, ct.soLuong, ct.donGia, ct.thanhTien, "
+				+ "ISNULL(ct.trangThaiPhucVu, N'Chưa lên') as trangThaiPhucVu " + "FROM ChiTietHoaDon ct "
+				+ "JOIN MonAn m ON ct.maMonAn = m.maMonAn " + "WHERE ct.maHD = ?";
+
 		try {
-			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-			java.sql.PreparedStatement ps = con.prepareStatement(sql);
+			Connection con = ConnectDB.getInstance().getConnection();
+			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, maHD);
-			java.sql.ResultSet rs = ps.executeQuery();
+			ResultSet rs = ps.executeQuery();
+
 			while (rs.next()) {
 				MonAnModel mon = new MonAnModel();
 				mon.id_cthd = rs.getInt("ID_CTHD");
 				mon.maMonAn = rs.getString("maMonAn");
 				mon.tenMonAn = rs.getString("tenMonAn");
-
 				mon.soLuong = rs.getInt("soLuong");
-				mon.giaBan = (long) rs.getDouble("giaBan");
+				mon.giaBan = (long) rs.getDouble("donGia");
 				mon.thanhTien = (long) rs.getDouble("thanhTien");
-				mon.trangThaiPhucVu = rs.getString("trangThaiPhucVu"); // Thêm dòng này
+				mon.trangThaiPhucVu = rs.getString("trangThaiPhucVu");
 				list.add(mon);
 			}
+
 			rs.close();
 			ps.close();
 		} catch (Exception e) {
@@ -204,16 +320,17 @@ public class PhucVuServiceDb implements PhucVuService {
 		return list;
 	}
 
-	// THÊM 2 HÀM MỚI NÀY VÀO DƯỚI CÙNG
 	@Override
 	public boolean capNhatTrangThaiMon(int idCTHD, String trangThaiMoi) {
 		String sql = "UPDATE ChiTietHoaDon SET trangThaiPhucVu = ? WHERE ID_CTHD = ?";
 		try {
-			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-			java.sql.PreparedStatement ps = con.prepareStatement(sql);
+			Connection con = ConnectDB.getInstance().getConnection();
+			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, trangThaiMoi);
 			ps.setInt(2, idCTHD);
-			return ps.executeUpdate() > 0;
+			boolean ok = ps.executeUpdate() > 0;
+			ps.close();
+			return ok;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -223,13 +340,23 @@ public class PhucVuServiceDb implements PhucVuService {
 	@Override
 	public boolean yeuCauThanhToan(String maHD, String maBan) {
 		try {
-			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
-			con.prepareStatement("UPDATE HoaDon SET trangThaiThanhToan = N'Chờ thanh toán' WHERE maHD = '" + maHD + "'")
-					.executeUpdate();
-			con.prepareStatement("UPDATE BanAn SET trangThai = N'Chờ thanh toán' WHERE maBan = '" + maBan + "'")
-					.executeUpdate();
+			Connection con = ConnectDB.getInstance().getConnection();
+
+			PreparedStatement ps1 = con
+					.prepareStatement("UPDATE HoaDon SET trangThaiThanhToan = N'Chờ thanh toán' WHERE maHD = ?");
+			ps1.setString(1, maHD);
+			ps1.executeUpdate();
+			ps1.close();
+
+			PreparedStatement ps2 = con
+					.prepareStatement("UPDATE BanAn SET trangThai = N'Chờ thanh toán' WHERE maBan = ?");
+			ps2.setString(1, maBan);
+			ps2.executeUpdate();
+			ps2.close();
+
 			return true;
 		} catch (Exception e) {
+			e.printStackTrace();
 			return false;
 		}
 	}

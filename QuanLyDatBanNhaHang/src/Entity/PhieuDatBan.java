@@ -13,6 +13,8 @@ public class PhieuDatBan {
 	private String trangThai;
 	private Date ngayTao;
 	private String tenBan;
+	private double tienMonDatTruoc;
+	private double tienCoc;
 
 	public String getMaPhieu() {
 		return maPhieu;
@@ -92,5 +94,21 @@ public class PhieuDatBan {
 
 	public void setTenBan(String tenBan) {
 		this.tenBan = tenBan;
+	}
+
+	public double getTienMonDatTruoc() {
+		return tienMonDatTruoc;
+	}
+
+	public void setTienMonDatTruoc(double tienMonDatTruoc) {
+		this.tienMonDatTruoc = tienMonDatTruoc;
+	}
+
+	public double getTienCoc() {
+		return tienCoc;
+	}
+
+	public void setTienCoc(double tienCoc) {
+		this.tienCoc = tienCoc;
 	}
 }
