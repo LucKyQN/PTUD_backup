@@ -33,7 +33,7 @@ public class FrmDashBoard extends JFrame {
 
 	private CardLayout cardLayout;
 	private JPanel contentPanel;
-
+	private JPopupMenu currentPopup;
 	private JPanel dashboardPanel;
 	private FrmQLNhanVien pnlNhanVien;
 	private FrmQLMonAn pnlMonAn;
@@ -74,9 +74,10 @@ public class FrmDashBoard extends JFrame {
 		root.add(createMainArea(), BorderLayout.CENTER);
 
 		setContentPane(root);
+
 	}
 
-	// ========================= SIDEBAR =========================
+	//  SIDEBAR 
 	private JPanel createSidebar() {
 		JPanel sidebar = new JPanel();
 		sidebar.setPreferredSize(new Dimension(210, 0));
@@ -129,51 +130,53 @@ public class FrmDashBoard extends JFrame {
 		menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
 		menuPanel.setBorder(new EmptyBorder(8, 10, 8, 10));
 
+		//MENU CHA 
 		JPanel btnDashboard = createMenuButton("🏠", "Dashboard");
-		JPanel btnThucDon = createMenuButton("🍽", "Quản lý Thực đơn");
-		JPanel btnBan = createMenuButton("🪑", "Quản lý Bàn");
-		JPanel btnSoDoBan = createMenuButton("🗺", "Quản Lý Sơ Đồ Bàn");
+		JPanel btnVanHanh = createMenuButton("🧩", "Vận hành");
+		JPanel btnNhanSuGroup = createMenuButton("👥", "Nhân sự");
+		JPanel btnHeThong = createMenuButton("⚙", "Hệ thống");
 
-		JPanel btnNhanSu = createMenuButton("👥", "Quản lý Nhân sự");
-		JPanel btnKhuyenMai = createMenuButton("🎁", "Quản lý Khuyến mãi");
-		JPanel btnBaoCao = createMenuButton("📈", "Báo cáo Doanh thu");
-		JPanel btnCaiDat = createMenuButton("⚙", "Cài đặt");
-
+		//  MENU MAP: chỉ highlight MENU CHA
+		menuMap.clear();
 		menuMap.put("Dashboard", btnDashboard);
-		menuMap.put("Quản lý Thực đơn", btnThucDon);
-		menuMap.put("Quản lý Bàn", btnBan);
-		menuMap.put("Quản lý Nhân sự", btnNhanSu);
-		menuMap.put("Quản lý Khuyến mãi", btnKhuyenMai);
-		menuMap.put("Báo cáo Doanh thu", btnBaoCao);
-		menuMap.put("Quản Lý Sơ Đồ Bàn", btnSoDoBan);
+		menuMap.put("Vận hành", btnVanHanh);
+		menuMap.put("Nhân sự", btnNhanSuGroup);
+		menuMap.put("Hệ thống", btnHeThong);
 
-		menuMap.put("Cài đặt", btnCaiDat);
-
+		// Dashboard click trực tiếp
 		addMenuAction(btnDashboard, "Dashboard");
-		addMenuAction(btnThucDon, "Quản lý Thực đơn");
-		addMenuAction(btnBan, "Quản lý Bàn");
-		addMenuAction(btnNhanSu, "Quản lý Nhân sự");
-		addMenuAction(btnKhuyenMai, "Quản lý Khuyến mãi");
-		addMenuAction(btnSoDoBan, "Quản Lý Sơ Đồ Bàn");
 
-		addMenuAction(btnBaoCao, "Báo cáo Doanh thu");
-		addMenuAction(btnCaiDat, "Cài đặt");
+		// SUBMENU VẬN HÀNH 
+		JPopupMenu popupVanHanh = createSubMenuPopup(new String[][] {
+				{ "Quản Lý Sơ Đồ Bàn", "SODOBAN", "Quản Lý Sơ Đồ Bàn", "Theo dõi bàn trống, bàn có khách và bàn đã đặt",
+						"Vận hành" },
+				{ "Quản lý Bàn", "BANAN", "Quản lý Bàn", "Thêm, sửa, xóa và quản lý danh sách bàn ăn", "Vận hành" },
+				{ "Quản lý Thực đơn", "MONAN", "Quản lý Thực đơn", "Thêm, sửa, xóa và quản lý danh sách món ăn",
+						"Vận hành" },
+				{ "Quản lý Khuyến mãi", "KHUYENMAI", "Quản lý Khuyến mãi",
+						"Tạo, cập nhật và quản lý các chương trình khuyến mãi", "Vận hành" } });
+
+		// SUBMENU NHÂN SỰ 
+		JPopupMenu popupNhanSu = createSubMenuPopup(new String[][] { { "Quản lý Nhân sự", "NHANVIEN", "Quản lý Nhân sự",
+				"Thêm, sửa, xóa và quản lý danh sách nhân viên", "Nhân sự" } });
+
+		//SUBMENU HỆ THỐNG 
+		JPopupMenu popupHeThong = createSubMenuPopup(new String[][] {
+				{ "Báo cáo Doanh thu", "BAOCAO", "Báo cáo Doanh thu", "Theo dõi doanh thu và hiệu suất kinh doanh",
+						"Hệ thống" },
+				{ "Cài đặt", "CAIDAT", "Cài đặt", "Quản lý tài khoản và cấu hình hệ thống", "Hệ thống" } });
+
+		addClickPopup(btnVanHanh, popupVanHanh);
+		addClickPopup(btnNhanSuGroup, popupNhanSu);
+		addClickPopup(btnHeThong, popupHeThong);
 
 		menuPanel.add(btnDashboard);
 		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnThucDon);
+		menuPanel.add(btnVanHanh);
 		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnBan);
+		menuPanel.add(btnNhanSuGroup);
 		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnNhanSu);
-		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnKhuyenMai);
-		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnBaoCao);
-		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnSoDoBan);
-		menuPanel.add(Box.createVerticalStrut(6));
-		menuPanel.add(btnCaiDat);
+		menuPanel.add(btnHeThong);
 
 		updateMenuState();
 
@@ -215,6 +218,81 @@ public class FrmDashBoard extends JFrame {
 		return sidebar;
 	}
 
+	private JPopupMenu createSubMenuPopup(String[][] items) {
+		JPopupMenu popup = new JPopupMenu();
+		popup.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+		popup.setBackground(Color.WHITE);
+
+		for (String[] item : items) {
+			String menuText = item[0];
+			String cardName = item[1];
+			String title = item[2];
+			String subTitle = item[3];
+			String groupName = item[4];
+
+			JMenuItem mi = new JMenuItem(menuText);
+			mi.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+			mi.setPreferredSize(new Dimension(220, 42));
+			mi.setBackground(Color.WHITE);
+			mi.setForeground(TEXT_DARK);
+			mi.setOpaque(true);
+			mi.setFocusPainted(false);
+
+			mi.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					mi.setBackground(new Color(254, 242, 242));
+					mi.setForeground(RED_MAIN);
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e) {
+					mi.setBackground(Color.WHITE);
+					mi.setForeground(TEXT_DARK);
+				}
+			});
+
+			mi.addActionListener(e -> {
+				showPage(cardName, title, subTitle, groupName);
+				popup.setVisible(false);
+				currentPopup = null;
+			});
+
+			popup.add(mi);
+		}
+
+		return popup;
+	}
+
+	private void addClickPopup(JPanel parentBtn, JPopupMenu popup) {
+		MouseAdapter clickHandler = new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (currentPopup != null && currentPopup.isVisible()) {
+					if (currentPopup == popup) {
+						currentPopup.setVisible(false);
+						currentPopup = null;
+						return;
+					}
+					currentPopup.setVisible(false);
+				}
+
+				popup.show(parentBtn, parentBtn.getWidth() - 2, 0);
+				currentPopup = popup;
+			}
+		};
+
+		parentBtn.addMouseListener(clickHandler);
+
+		JLabel lbIcon = (JLabel) parentBtn.getClientProperty("iconLabel");
+		JLabel lbText = (JLabel) parentBtn.getClientProperty("textLabel");
+
+		if (lbIcon != null)
+			lbIcon.addMouseListener(clickHandler);
+		if (lbText != null)
+			lbText.addMouseListener(clickHandler);
+	}
+
 	private JPanel createMenuButton(String icon, String label) {
 		JPanel btn = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 10));
 		btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
@@ -223,10 +301,12 @@ public class FrmDashBoard extends JFrame {
 
 		JLabel lbIcon = new JLabel(icon);
 		lbIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 15));
+		lbIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
 		JLabel lbLabel = new JLabel(label);
 		lbLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		lbLabel.setForeground(TEXT_DARK);
+		lbLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
 		btn.add(lbIcon);
 		btn.add(lbLabel);
@@ -235,7 +315,7 @@ public class FrmDashBoard extends JFrame {
 		btn.putClientProperty("iconLabel", lbIcon);
 		btn.putClientProperty("textLabel", lbLabel);
 
-		btn.addMouseListener(new MouseAdapter() {
+		MouseAdapter hoverEffect = new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				String thisLabel = (String) btn.getClientProperty("menuLabel");
@@ -251,7 +331,12 @@ public class FrmDashBoard extends JFrame {
 					btn.setBackground(SIDEBAR_BG);
 				}
 			}
-		});
+		};
+
+		// Gắn hover cho cả panel và label con
+		btn.addMouseListener(hoverEffect);
+		lbIcon.addMouseListener(hoverEffect);
+		lbLabel.addMouseListener(hoverEffect);
 
 		return btn;
 	}
@@ -310,7 +395,7 @@ public class FrmDashBoard extends JFrame {
 		}
 	}
 
-	// ========================= MAIN AREA =========================
+	// ///MAIN AREA
 	private JPanel createMainArea() {
 		JPanel main = new JPanel(new BorderLayout());
 		main.setBackground(BG_MAIN);
