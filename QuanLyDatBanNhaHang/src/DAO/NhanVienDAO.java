@@ -46,7 +46,7 @@ public class NhanVienDAO {
 
 	public List<NhanVien> getAllNhanVien() {
 		List<NhanVien> list = new ArrayList<>();
-		String sql = "SELECT * FROM NhanVien ORDER BY maNV";
+		String sql = "SELECT * FROM NhanVien WHERE trangThai = 1 ORDER BY maNV";
 
 		try {
 			Connection con = getConnection();
@@ -233,23 +233,49 @@ public class NhanVienDAO {
 		}
 	}
 
-	public boolean xoaHoanToanNhanVien(String maNV) {
-		String sql = "DELETE FROM NhanVien WHERE maNV = ?";
+//	public boolean xoaHoanToanNhanVien(String maNV) {
+//		String sql = "DELETE FROM NhanVien WHERE maNV = ?";
+//
+//		try {
+//			Connection con = getConnection();
+//			PreparedStatement stmt = con.prepareStatement(sql);
+//			stmt.setString(1, maNV);
+//
+//			int rows = stmt.executeUpdate();
+//			stmt.close();
+//
+//			return rows > 0;
+//		} catch (Exception e) {
+//			System.err.println("Lỗi xóa hoàn toàn nhân viên (có thể do khóa ngoại): " + e.getMessage());
+//			e.printStackTrace();
+//			return false;
+//		}
+//	}
+	public String taoMaNhanVienTuDong() {
+		String sql = "SELECT TOP 1 maNV FROM NhanVien WHERE maNV LIKE 'NV%' ORDER BY maNV DESC";
 
 		try {
 			Connection con = getConnection();
-			PreparedStatement stmt = con.prepareStatement(sql);
-			stmt.setString(1, maNV);
+			PreparedStatement ps = con.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
 
-			int rows = stmt.executeUpdate();
-			stmt.close();
+			if (rs.next()) {
+				String maCuoi = rs.getString("maNV"); // ví dụ NV001
+				if (maCuoi != null && maCuoi.matches("NV\\d+")) {
+					int so = Integer.parseInt(maCuoi.substring(2));
+					rs.close();
+					ps.close();
+					return String.format("NV%03d", so + 1);
+				}
+			}
 
-			return rows > 0;
+			rs.close();
+			ps.close();
 		} catch (Exception e) {
-			System.err.println("Lỗi xóa hoàn toàn nhân viên (có thể do khóa ngoại): " + e.getMessage());
 			e.printStackTrace();
-			return false;
 		}
+
+		return "NV001";
 	}
 
 	private String[] tachKhuVucTheoVaiTro(NhanVien nv) {

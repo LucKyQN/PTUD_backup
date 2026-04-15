@@ -52,15 +52,12 @@ public class FrmQLNhanVien extends JPanel {
 
 		JButton btnThem = new JButton("Thêm");
 		JButton btnSua = new JButton("Sửa");
-		JButton btnXoaMem = new JButton("Xóa mềm");
-		JButton btnXoaHoanToan = new JButton("Xóa hoàn toàn");
+		JButton btnXoaMem = new JButton("Xóa");
 
 		btnThem.addActionListener(e -> moDialogThem());
 		btnSua.addActionListener(e -> moDialogSua());
 		btnXoaMem.addActionListener(e -> xoaMemNhanVien());
-		btnXoaHoanToan.addActionListener(e -> xoaHoanToanNhanVien());
 
-		btnPanel.add(btnXoaHoanToan);
 		btnPanel.add(btnXoaMem);
 		btnPanel.add(btnSua);
 		btnPanel.add(btnThem);
@@ -181,31 +178,6 @@ public class FrmQLNhanVien extends JPanel {
 		}
 	}
 
-	private void xoaHoanToanNhanVien() {
-		NhanVien nv = getNhanVienDangChon();
-		if (nv == null) {
-			JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần xóa hoàn toàn.");
-			return;
-		}
-
-		int confirm = JOptionPane.showConfirmDialog(this,
-				"CẢNH BÁO: Xóa hoàn toàn nhân viên " + nv.getMaNV() + " - " + nv.getHoTenNV() + "?\n"
-						+ "Hành động này sẽ xóa dữ liệu vĩnh viễn và không thể hoàn tác!",
-				"Xóa hoàn toàn nhân viên", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-		if (confirm != JOptionPane.YES_OPTION)
-			return;
-
-		if (dao.xoaHoanToanNhanVien(nv.getMaNV())) {
-			JOptionPane.showMessageDialog(this, "Đã xóa vĩnh viễn nhân viên khỏi hệ thống.");
-			loadTable();
-		} else {
-			JOptionPane.showMessageDialog(this,
-					"Xóa thất bại! Nhân viên này có thể đang liên kết với Hóa Đơn hoặc dữ liệu khác.", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
-		}
-	}
-
 	static class NhanVienDialog extends JDialog {
 
 		private final NhanVienDAO dao;
@@ -235,6 +207,8 @@ public class FrmQLNhanVien extends JPanel {
 
 			if (nhanVienSua != null) {
 				doDuLieuLenForm();
+			} else {
+				txtMaNV.setText(dao.taoMaNhanVienTuDong());
 			}
 
 			pack();
@@ -255,6 +229,8 @@ public class FrmQLNhanVien extends JPanel {
 			fields.setOpaque(false);
 
 			txtMaNV = new JTextField();
+			txtMaNV.setEditable(false);
+			txtMaNV.setBackground(new Color(245, 245, 245));
 			txtHoTen = new JTextField();
 			txtNgaySinh = new JTextField();
 
@@ -264,11 +240,10 @@ public class FrmQLNhanVien extends JPanel {
 			txtDiaChi = new JTextField();
 			txtHeSoLuong = new JTextField();
 
-			cboVaiTro = new JComboBox<>(new String[] { "Quản lý", "Thu ngân", "Nhân viên", "Lễ tân", "Phục vụ" });
+			cboVaiTro = new JComboBox<>(new String[] { "Quản lý", "Thu ngân","Lễ tân", "Phục vụ" });
 			cboVaiTro.addActionListener(e -> capNhatTrangThaiKhuVuc());
 
-			cboKhuVuc = new JComboBox<>(new String[] { "", "Tầng 1", "Tầng 2", "Phòng VIP", "Sảnh chính", "Quầy lễ tân",
-					"Khu A", "Khu B", "Khu C" });
+			cboKhuVuc = new JComboBox<>(new String[] { "", "Tầng 1", "Tầng 2", "Phòng VIP"});
 			cboKhuVuc.setEditable(true);
 			cboKhuVuc.setEnabled(false);
 
