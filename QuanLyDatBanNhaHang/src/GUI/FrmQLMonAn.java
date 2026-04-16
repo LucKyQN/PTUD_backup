@@ -376,7 +376,7 @@ public class FrmQLMonAn extends JPanel {
 				}
 			});
 
-			cboDonVi = new JComboBox<>(new String[] { "Phần", "Dĩa", "Tô", "Ly", "Chai", "Cái", "Suất" });
+			cboDonVi = new JComboBox<>(new String[] { "Phần", "Dĩa", "Tô", "Ly", "Chai", "Cái", "Suất","Lon" });
 			cboDonVi.setEditable(true);
 
 			txtSoLuongTon = new JTextField();

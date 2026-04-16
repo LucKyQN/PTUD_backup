@@ -132,8 +132,29 @@ public class FrmPhucVu extends JFrame {
 		info.add(lbTitle);
 		info.add(lbRole);
 
+		//bar.add(west, BorderLayout.WEST);
+		//bar.add(info, BorderLayout.CENTER);
+		// Nút xem thực đơn
+		JButton btnMenu = new JButton("Xem thực đơn");
+		btnMenu.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnMenu.setBackground(RED_MAIN);
+		btnMenu.setForeground(Color.WHITE);
+		btnMenu.setFocusPainted(false);
+
+		// Sự kiện click
+		btnMenu.addActionListener(e -> {
+		    FrmMenu frmMenu = new FrmMenu();
+		    frmMenu.setVisible(true);
+		});
+
+		// Panel bên phải
+		JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		right.setOpaque(false);
+		right.add(btnMenu);
+
 		bar.add(west, BorderLayout.WEST);
 		bar.add(info, BorderLayout.CENTER);
+		bar.add(right, BorderLayout.EAST);
 		return bar;
 	}
 
