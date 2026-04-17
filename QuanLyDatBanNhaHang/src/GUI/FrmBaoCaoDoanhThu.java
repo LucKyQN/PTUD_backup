@@ -12,6 +12,20 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 import java.util.List;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class FrmBaoCaoDoanhThu extends JPanel {
 
@@ -32,6 +46,14 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 	private DefaultTableModel tblModel;
 	// Period combo
 	private JComboBox<String> cboPeriod;
+	private long currentTongDT;
+	private int currentSoDon;
+	private int currentSoKH;
+	private long currentGiaTB;
+
+	private List<long[]> currentChartData = new ArrayList<>();
+	private List<String[]> currentTopMon = new ArrayList<>();
+	private List<String[]> currentPhanBo = new ArrayList<>();
 
 	public FrmBaoCaoDoanhThu() {
 		initUI();
@@ -63,7 +85,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		add(scroll, BorderLayout.CENTER);
 	}
 
-	// ==================== HEADER ====================
+	// HEADER
 	private JPanel createTopActions() {
 		JPanel p = new JPanel(new BorderLayout());
 		p.setOpaque(false);
@@ -80,8 +102,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		btnXuat.setBorderPainted(false);
 		btnXuat.setBorder(new EmptyBorder(9, 16, 9, 16));
 		btnXuat.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnXuat.addActionListener(
-				e -> JOptionPane.showMessageDialog(this, "Chức năng xuất báo cáo PDF/Excel sẽ được tích hợp sau."));
+		btnXuat.addActionListener(e -> xuatBaoCaoPDF());
 
 		JPanel rightBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		rightBox.setOpaque(false);
@@ -92,7 +113,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return p;
 	}
 
-	// ==================== STAT CARDS ====================
+	// STAT CARDS
 	private JPanel createStatCards() {
 		JPanel row = new JPanel(new GridLayout(1, 4, 14, 0));
 		row.setOpaque(false);
@@ -102,10 +123,10 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		lbGiaTBDon = new JLabel("...");
 		lbKhachHang = new JLabel("...");
 
-		row.add(createStatCard("💰", "Tổng doanh thu", lbTongDT, "+15.9%", true, new Color(34, 197, 94)));
-		row.add(createStatCard("🛒", "Số đơn hàng", lbSoDon, "-8.1%", false, new Color(99, 102, 241)));
-		row.add(createStatCard("📊", "Giá trị TB/đơn", lbGiaTBDon, "+12.4%", true, new Color(168, 85, 247)));
-		row.add(createStatCard("👥", "Khách hàng", lbKhachHang, "-6.0%", false, new Color(251, 146, 60)));
+		row.add(createStatCard("💰", "Tổng doanh thu", lbTongDT, "", true, new Color(34, 197, 94)));
+		row.add(createStatCard("🛒", "Số đơn hàng", lbSoDon, "", false, new Color(99, 102, 241)));
+		row.add(createStatCard("📊", "Giá trị TB/đơn", lbGiaTBDon, "", true, new Color(168, 85, 247)));
+		row.add(createStatCard("👥", "Khách hàng", lbKhachHang, "", false, new Color(251, 146, 60)));
 
 		return row;
 	}
@@ -163,7 +184,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return card;
 	}
 
-	// ==================== CHARTS ROW ====================
+	// CHARTS ROW
 	private JPanel createChartsRow() {
 		JPanel row = new JPanel(new GridLayout(1, 2, 14, 0));
 		row.setOpaque(false);
@@ -198,7 +219,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return row;
 	}
 
-	// ==================== BOTTOM TABLE ====================
+	// BOTTOM TABLE
 	private JPanel createBottomTable() {
 		JPanel card = new JPanel(new BorderLayout(0, 12));
 		card.setBackground(Color.WHITE);
@@ -256,7 +277,136 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return card;
 	}
 
-	// ==================== LOAD DATA FROM DB ====================
+	private String getTenKyBaoCao() {
+		return switch (cboPeriod.getSelectedIndex()) {
+		case 0 -> "7_ngay_qua";
+		case 1 -> "30_ngay_qua";
+		case 2 -> "thang_nay";
+		default -> "nam_nay";
+		};
+	}
+
+	private String formatTienPDF(long soTien) {
+		return String.format("%,d", soTien).replace(",", ".");
+	}
+
+	private com.lowagie.text.Font taoFontUnicode(float size, int style) throws Exception {
+		BaseFont bf = BaseFont.createFont("C:/Windows/Fonts/arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+		return new com.lowagie.text.Font(bf, size, style);
+	}
+
+	private PdfPCell taoCell(String text, com.lowagie.text.Font font, int align) {
+		PdfPCell cell = new PdfPCell(new Phrase(text, font));
+		cell.setHorizontalAlignment(align);
+		cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+		cell.setPadding(8f);
+		return cell;
+	}
+
+	private void xuatBaoCaoPDF() {
+		if (currentTopMon == null) {
+			JOptionPane.showMessageDialog(this, "Chưa có dữ liệu để xuất.");
+			return;
+		}
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Chọn nơi lưu báo cáo PDF");
+		chooser.setSelectedFile(new File("bao_cao_doanh_thu_" + getTenKyBaoCao() + ".pdf"));
+
+		int result = chooser.showSaveDialog(this);
+		if (result != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		File file = chooser.getSelectedFile();
+		if (!file.getName().toLowerCase().endsWith(".pdf")) {
+			file = new File(file.getAbsolutePath() + ".pdf");
+		}
+
+		Document document = new Document(PageSize.A4, 36, 36, 36, 36);
+
+		try {
+			PdfWriter.getInstance(document, new FileOutputStream(file));
+			document.open();
+
+			com.lowagie.text.Font fontTitle = taoFontUnicode(18, com.lowagie.text.Font.BOLD);
+			com.lowagie.text.Font fontSub = taoFontUnicode(12, com.lowagie.text.Font.NORMAL);
+			com.lowagie.text.Font fontBold = taoFontUnicode(12, com.lowagie.text.Font.BOLD);
+			com.lowagie.text.Font fontNormal = taoFontUnicode(11, com.lowagie.text.Font.NORMAL);
+
+			Paragraph title = new Paragraph("BÁO CÁO DOANH THU", fontTitle);
+			title.setAlignment(Element.ALIGN_CENTER);
+			document.add(title);
+
+			document.add(new Paragraph("Kỳ báo cáo: " + cboPeriod.getSelectedItem(), fontSub));
+			document.add(new Paragraph("Ngày xuất: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()),
+					fontSub));
+			document.add(new Paragraph(" "));
+
+			document.add(new Paragraph("1. THỐNG KÊ TỔNG QUAN", fontBold));
+			document.add(new Paragraph("Tổng doanh thu: " + formatTienPDF(currentTongDT) + " đ", fontNormal));
+			document.add(new Paragraph("Số đơn hàng: " + currentSoDon, fontNormal));
+			document.add(new Paragraph("Giá trị trung bình / đơn: " + formatTienPDF(currentGiaTB) + " đ", fontNormal));
+			document.add(new Paragraph("Số khách hàng: " + currentSoKH, fontNormal));
+			document.add(new Paragraph(" "));
+
+			document.add(new Paragraph("2. PHÂN BỐ DOANH THU THEO DANH MỤC", fontBold));
+			if (currentPhanBo.isEmpty()) {
+				document.add(new Paragraph("Chưa có dữ liệu.", fontNormal));
+			} else {
+				for (String[] row : currentPhanBo) {
+					document.add(new Paragraph("- " + row[0] + ": " + formatTienPDF(Long.parseLong(row[1])) + " đ",
+							fontNormal));
+				}
+			}
+			document.add(new Paragraph(" "));
+
+			document.add(new Paragraph("3. TOP MÓN ĂN BÁN CHẠY", fontBold));
+			document.add(new Paragraph(" "));
+
+			PdfPTable table = new PdfPTable(5);
+			table.setWidthPercentage(100);
+			table.setWidths(new float[] { 3.2f, 2.2f, 1.6f, 2.0f, 1.4f });
+
+			table.addCell(taoCell("Món ăn", fontBold, Element.ALIGN_LEFT));
+			table.addCell(taoCell("Danh mục", fontBold, Element.ALIGN_LEFT));
+			table.addCell(taoCell("SL bán", fontBold, Element.ALIGN_CENTER));
+			table.addCell(taoCell("Doanh thu", fontBold, Element.ALIGN_RIGHT));
+			table.addCell(taoCell("% Tổng ĐT", fontBold, Element.ALIGN_CENTER));
+
+			if (currentTopMon.isEmpty()) {
+				PdfPCell empty = taoCell("Chưa có dữ liệu", fontNormal, Element.ALIGN_CENTER);
+				empty.setColspan(5);
+				table.addCell(empty);
+			} else {
+				for (String[] row : currentTopMon) {
+					table.addCell(taoCell(row[0], fontNormal, Element.ALIGN_LEFT));
+					table.addCell(taoCell(row[1], fontNormal, Element.ALIGN_LEFT));
+					table.addCell(taoCell(row[2], fontNormal, Element.ALIGN_CENTER));
+					table.addCell(taoCell(row[3], fontNormal, Element.ALIGN_RIGHT));
+					table.addCell(taoCell(row[4], fontNormal, Element.ALIGN_CENTER));
+				}
+			}
+
+			document.add(table);
+
+			document.close();
+
+			JOptionPane.showMessageDialog(this, "Xuất báo cáo PDF thành công!\nFile: " + file.getAbsolutePath(),
+					"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF!\n" + ex.getMessage(), "Lỗi",
+					JOptionPane.ERROR_MESSAGE);
+		} finally {
+			if (document.isOpen()) {
+				document.close();
+			}
+		}
+	}
+
+	// LOAD DATA FROM DB
 	private void loadData() {
 		SwingWorker<Void, Void> w = new SwingWorker<>() {
 			long tongDT;
@@ -386,12 +536,20 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 				tblModel.setRowCount(0);
 				for (String[] r : topMon)
 					tblModel.addRow(r);
+				currentTongDT = tongDT;
+				currentSoDon = soDon;
+				currentSoKH = soKH;
+				currentGiaTB = giaTB;
+
+				currentChartData = new ArrayList<>(chartData);
+				currentTopMon = new ArrayList<>(topMon);
+				currentPhanBo = new ArrayList<>(phanBo);
 			}
 		};
 		w.execute();
 	}
 
-	// ==================== LINE CHART (tự vẽ) ====================
+	// LINE CHART (tự vẽ)
 	static class LineChartPanel extends JPanel {
 		private List<long[]> data = new ArrayList<>();
 		private static final Color LINE_COLOR = new Color(220, 38, 38);
@@ -464,7 +622,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		}
 	}
 
-	// ==================== PIE CHART (tự vẽ) ====================
+	// PIE CHART (tự vẽ)
 	static class PieChartPanel extends JPanel {
 		private List<String[]> data = new ArrayList<>();
 		private static final Color[] COLORS = { new Color(220, 38, 38), new Color(251, 146, 60), new Color(234, 179, 8),

@@ -139,23 +139,63 @@ public class FrmThuNgan extends JFrame {
 		bar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
 				new EmptyBorder(15, 25, 15, 25)));
 
-		JLabel btnBack = new JLabel("<html><font color='#DC2626'><b>←</b></font> Quay lại hệ thống</html>");
-		btnBack.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-		btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnBack.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				dispose();
-			}
-		});
+		// --- BÊN TRÁI: LOGO & TIÊU ĐỀ (Đã xóa nút Quay lại) ---
+		JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+		west.setOpaque(false);
 
+		JLabel lblLogo = new JLabel("🏮");
+		lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+		lblLogo.setForeground(RED_MAIN);
+
+		JLabel lbTitle = new JLabel("Nhà Hàng Ngói Đỏ - Thu Ngân");
+		lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+		west.add(lblLogo);
+		west.add(lbTitle);
+
+		// --- BÊN PHẢI: USER, CÀI ĐẶT & ĐĂNG XUẤT ---
 		JLabel lbUser = new JLabel(
 				"👤 " + tenNhanVien + " | " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 		lbUser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		lbUser.setForeground(TEXT_DARK);
 
-		bar.add(btnBack, BorderLayout.WEST);
-		bar.add(lbUser, BorderLayout.EAST);
+		JButton btnCaiDat = new JButton("Cài đặt");
+		btnCaiDat.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnCaiDat.setBackground(new Color(240, 240, 240));
+		btnCaiDat.setFocusPainted(false);
+		btnCaiDat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnCaiDat.addActionListener(e -> {
+			JDialog dialog = new JDialog(this, "Cài đặt cá nhân", true);
+			dialog.setSize(900, 700);
+			dialog.setLocationRelativeTo(this);
+			dialog.setContentPane(new GUI.FrmCaiDat());
+			dialog.setVisible(true);
+		});
+
+		// NÚT ĐĂNG XUẤT MỚI
+		JButton btnLogout = new JButton("Đăng xuất");
+		btnLogout.setContentAreaFilled(false);
+		btnLogout.setBorderPainted(false);
+		btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnLogout.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		btnLogout.setForeground(RED_MAIN);
+		btnLogout.addActionListener(e -> {
+			int c = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận",
+					JOptionPane.YES_NO_OPTION);
+			if (c == JOptionPane.YES_OPTION) {
+				dispose(); // Đóng form Thu Ngân
+				new FrmDangNhap().setVisible(true); // Mở lại form Đăng Nhập
+			}
+		});
+
+		JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+		rightPanel.setOpaque(false);
+		rightPanel.add(lbUser);
+		rightPanel.add(btnCaiDat);
+		rightPanel.add(btnLogout); // Add nút đăng xuất vào góc phải
+
+		bar.add(west, BorderLayout.WEST);
+		bar.add(rightPanel, BorderLayout.EAST);
 		return bar;
 	}
 

@@ -233,24 +233,66 @@ public class NhanVienDAO {
 		}
 	}
 
-//	public boolean xoaHoanToanNhanVien(String maNV) {
-//		String sql = "DELETE FROM NhanVien WHERE maNV = ?";
-//
-//		try {
-//			Connection con = getConnection();
-//			PreparedStatement stmt = con.prepareStatement(sql);
-//			stmt.setString(1, maNV);
-//
-//			int rows = stmt.executeUpdate();
-//			stmt.close();
-//
-//			return rows > 0;
-//		} catch (Exception e) {
-//			System.err.println("Lỗi xóa hoàn toàn nhân viên (có thể do khóa ngoại): " + e.getMessage());
-//			e.printStackTrace();
-//			return false;
-//		}
-//	}
+	public NhanVien getNhanVienTheoMa(String maNV) {
+		String sql = "SELECT * FROM NhanVien WHERE maNV = ?";
+
+		try {
+			Connection con = getConnection();
+			PreparedStatement stmt = con.prepareStatement(sql);
+			stmt.setString(1, maNV);
+
+			ResultSet rs = stmt.executeQuery();
+			NhanVien nv = null;
+			if (rs.next()) {
+				nv = mapNhanVien(rs);
+			}
+
+			rs.close();
+			stmt.close();
+			return nv;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public boolean doiMatKhau(String maNV, String matKhauCu, String matKhauMoi) {
+		String sqlCheck = "SELECT COUNT(*) FROM NhanVien "
+				+ "WHERE maNV = ? AND password COLLATE Latin1_General_CS_AS = ?";
+		String sqlUpdate = "UPDATE NhanVien SET password = ? WHERE maNV = ?";
+
+		try {
+			Connection con = getConnection();
+
+			PreparedStatement psCheck = con.prepareStatement(sqlCheck);
+			psCheck.setString(1, maNV);
+			psCheck.setString(2, matKhauCu);
+			ResultSet rs = psCheck.executeQuery();
+
+			boolean hopLe = false;
+			if (rs.next()) {
+				hopLe = rs.getInt(1) > 0;
+			}
+			rs.close();
+			psCheck.close();
+
+			if (!hopLe) {
+				return false;
+			}
+
+			PreparedStatement psUpdate = con.prepareStatement(sqlUpdate);
+			psUpdate.setString(1, matKhauMoi);
+			psUpdate.setString(2, maNV);
+
+			int rows = psUpdate.executeUpdate();
+			psUpdate.close();
+
+			return rows > 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 	public String taoMaNhanVienTuDong() {
 		String sql = "SELECT TOP 1 maNV FROM NhanVien WHERE maNV LIKE 'NV%' ORDER BY maNV DESC";
 

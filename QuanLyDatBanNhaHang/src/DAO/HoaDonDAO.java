@@ -28,8 +28,8 @@ public class HoaDonDAO {
 				+ "       ISNULL(p.tienCoc, 0) AS tienCoc, " + "       ISNULL(p.tienMonDatTruoc, 0) AS tienMonDatTruoc "
 				+ "FROM BanAn b " + "INNER JOIN HoaDon h ON b.maBan = h.maBan "
 				+ "LEFT JOIN PhieuDatBan p ON h.maPhieuDatBan = p.maPhieu "
-				+ "WHERE h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') "
-				+ "AND b.trangThai IN (N'Có khách', N'Chờ thanh toán') "
+				+ "WHERE h.trangThaiThanhToan IN (N'Chờ thanh toán') "
+				+ "AND b.trangThai IN (N'Chờ thanh toán') "
 				+ "AND (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD) > 0";
 
 		try {

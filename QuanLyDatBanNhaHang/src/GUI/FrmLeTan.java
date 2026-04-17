@@ -18,20 +18,7 @@ import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import Entity.PhieuDatBan;
@@ -136,8 +123,26 @@ public class FrmLeTan extends JFrame {
 		right.setOpaque(false);
 		lblClock = new JLabel("00:00:00");
 		lblClock.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		JLabel lblUser = new JLabel("👤 Lễ tân Ca sáng");
+
+
+		String tenNV = (Entity.LuuLog.nhanVienDangNhap != null)
+				? Entity.LuuLog.nhanVienDangNhap.getTenNV()
+				: "Lễ tân";
+		JLabel lblUser = new JLabel("👤 " + tenNV);
 		lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+		JButton btnCaiDat = new JButton("Cài đặt");
+		btnCaiDat.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnCaiDat.setBackground(new Color(240, 240, 240));
+		btnCaiDat.setFocusPainted(false);
+		btnCaiDat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnCaiDat.addActionListener(e -> {
+			JDialog dialog = new JDialog(this, "Cài đặt cá nhân", true);
+			dialog.setSize(900, 700);
+			dialog.setLocationRelativeTo(this);
+			dialog.setContentPane(new GUI.FrmCaiDat()); // Gọi form cài đặt
+			dialog.setVisible(true);
+		});
 		JButton btnLogout = new JButton("Đăng xuất");
 		btnLogout.setContentAreaFilled(false);
 		btnLogout.setBorderPainted(false);
@@ -153,6 +158,7 @@ public class FrmLeTan extends JFrame {
 		});
 		right.add(lblClock);
 		right.add(lblUser);
+		right.add(btnCaiDat);
 		right.add(btnLogout);
 
 		bar.add(left, BorderLayout.WEST);

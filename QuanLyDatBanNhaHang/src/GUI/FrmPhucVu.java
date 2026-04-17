@@ -104,56 +104,74 @@ public class FrmPhucVu extends JFrame {
 		bar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
 				new EmptyBorder(14, 20, 14, 24)));
 
-		JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+		// --- BÊN TRÁI: LOGO & TIÊU ĐỀ (Đã bỏ nút Quay lại) ---
+		JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
 		west.setOpaque(false);
-
-		JLabel btnBack = new JLabel("←");
-		btnBack.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-		btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnBack.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				dispose();
-			}
-		});
-		west.add(btnBack);
+		JLabel lblLogo = new JLabel("🏮");
+		lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+		lblLogo.setForeground(RED_MAIN);
 
 		JPanel info = new JPanel();
 		info.setOpaque(false);
 		info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
-
 		JLabel lbTitle = new JLabel("Phục vụ — Quản lý món theo bàn");
 		lbTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
 		JLabel lbRole = new JLabel("Nhân viên: " + nhanVien.getHoTenNV());
 		lbRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 		lbRole.setForeground(TEXT_GRAY);
-
 		info.add(lbTitle);
 		info.add(lbRole);
 
-		//bar.add(west, BorderLayout.WEST);
-		//bar.add(info, BorderLayout.CENTER);
-		// Nút xem thực đơn
+		west.add(lblLogo);
+		west.add(info);
+
+		// --- BÊN PHẢI: CÀI ĐẶT, THỰC ĐƠN, ĐĂNG XUẤT ---
+		JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 5));
+		right.setOpaque(false);
+
+		JButton btnCaiDat = new JButton("Cài đặt");
+		btnCaiDat.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnCaiDat.setBackground(new Color(240, 240, 240));
+		btnCaiDat.setFocusPainted(false);
+		btnCaiDat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnCaiDat.addActionListener(e -> {
+			JDialog dialog = new JDialog(this, "Cài đặt cá nhân", true);
+			dialog.setSize(900, 700);
+			dialog.setLocationRelativeTo(this);
+			dialog.setContentPane(new GUI.FrmCaiDat());
+			dialog.setVisible(true);
+		});
+
 		JButton btnMenu = new JButton("Xem thực đơn");
 		btnMenu.setFont(new Font("Segoe UI", Font.BOLD, 13));
 		btnMenu.setBackground(RED_MAIN);
 		btnMenu.setForeground(Color.WHITE);
 		btnMenu.setFocusPainted(false);
-
-		// Sự kiện click
 		btnMenu.addActionListener(e -> {
-		    FrmMenu frmMenu = new FrmMenu();
-		    frmMenu.setVisible(true);
+			FrmMenu frmMenu = new FrmMenu();
+			frmMenu.setVisible(true);
 		});
 
-		// Panel bên phải
-		JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		right.setOpaque(false);
+		// NÚT ĐĂNG XUẤT CHUẨN
+		JButton btnLogout = new JButton("Đăng xuất");
+		btnLogout.setContentAreaFilled(false);
+		btnLogout.setBorderPainted(false);
+		btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnLogout.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		btnLogout.setForeground(RED_MAIN);
+		btnLogout.addActionListener(e -> {
+			int c = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+			if (c == JOptionPane.YES_OPTION) {
+				dispose();
+				new FrmDangNhap().setVisible(true);
+			}
+		});
+
+		right.add(btnCaiDat);
 		right.add(btnMenu);
+		right.add(btnLogout);
 
 		bar.add(west, BorderLayout.WEST);
-		bar.add(info, BorderLayout.CENTER);
 		bar.add(right, BorderLayout.EAST);
 		return bar;
 	}

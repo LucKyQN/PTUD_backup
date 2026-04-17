@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhà Hàng Ngói Đỏ - Tinh Hoa Ẩm Thực Việt</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <nav id="navbar">
+        <a href="#" class="logo">🏮 Ngói Đỏ</a>
+        <ul class="nav-links">
+            <li><a href="#home">Trang chủ</a></li>
+            <li><a href="#about">Giới thiệu</a></li>
+            <li><a href="#menu">Thực đơn</a></li>
+            <li><button class="btn-primary" id="btn-booking-nav">Đặt Bàn Ngay</button></li>
+        </ul>
+    </nav>
+
+    <header id="home" class="hero">
+        <div class="hero-content">
+            <h1>Tinh Hoa Ẩm Thực Việt</h1>
+            <p>Không gian ấm cúng, hương vị truyền thống kết hợp phong cách phục vụ hiện đại. Trải nghiệm ngay bữa ăn
+                tuyệt vời cùng gia đình và người thân.</p>
+            <button class="btn-primary btn-large" id="btn-explore">Đặt Bàn</button>
+        </div>
+    </header>
+
+    <section id="about">
+        <h2 class="section-title">Về Chúng Tôi</h2>
+        <div class="about-content">
+            <div class="about-image">
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
+                    alt="Không gian nhà hàng Ngói Đỏ">
+            </div>
+            <div class="about-text">
+                <h3>Câu chuyện của Ngói Đỏ</h3>
+                <p>Khởi nguồn từ niềm đam mê lưu giữ những hương vị mộc mạc của quê hương, <strong>Nhà Hàng Ngói
+                        Đỏ</strong> mang đến cho thực khách một thực đơn phong phú với các món ăn mang đậm bản sắc Việt
+                    Nam.</p>
+                <p>Với không gian rộng rãi, thoáng mát nhưng không kém phần sang trọng, hệ thống phòng VIP riêng tư,
+                    chúng tôi tự hào là điểm đến lý tưởng cho các buổi tiệc gia đình, gặp gỡ đối tác hay liên hoan công
+                    ty.</p>
+                <p>Sự hài lòng của quý khách chính là thước đo thành công của chúng tôi!</p>
+            </div>
+        </div>
+    </section>
+    <section id="menu" class="bg-white">
+        <h2 id="menu-title" class="section-title">Món Ngon Nổi Bật</h2>
+
+        <div id="featured-menu">
+            <div class="menu-grid">
+                <div class="menu-item">
+                    <img src="img/ganuongmuoiot.jpg" alt="Gà Nướng Muối Ớt">
+                    <div class="menu-info">
+                        <h3>Gà Nướng Muối Ớt</h3>
+                        <p>Gà đồi thả vườn nướng than hoa vàng ruộm, tẩm ướp mật ong rừng thơm lừng.</p>
+                        <div class="menu-price">280.000 đ</div>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <img src="img/lauthai.jpg" alt="Lẩu Thái Chua Cay">
+                    <div class="menu-info">
+                        <h3>Lẩu Thái Chua Cay</h3>
+                        <p>Nước lẩu chua cay đậm đà, ăn kèm hải sản tươi sống nhập mới mỗi ngày.</p>
+                        <div class="menu-price">300.000 đ</div>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <img src="img/boluclac.jpg" alt="Bò Lúc Lắc">
+                    <div class="menu-info">
+                        <h3>Bò Lúc Lắc</h3>
+                        <p>Thịt bò mềm mọng, đậm vị sốt tiêu đen ăn kèm khoai tây chiên giòn rụm.</p>
+                        <div class="menu-price">120.000 đ</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button id="btn-view-all" class="btn-primary btn-large">Xem Tất Cả Thực Đơn</button>
+            </div>
+        </div>
+
+        <div id="full-menu" class="hidden">
+            <div class="menu-filters">
+                <button class="filter-btn active" data-filter="all">Tất cả</button>
+                <button class="filter-btn" data-filter="khai-vi">Món khai vị</button>
+                <button class="filter-btn" data-filter="mon-chinh">Món chính</button>
+                <button class="filter-btn" data-filter="do-uong">Đồ uống</button>
+                <button class="filter-btn" data-filter="trang-mieng">Tráng miệng</button>
+            </div>
+
+            <div class="menu-grid full-grid">
+                <div class="menu-item full-item" data-category="do-uong">
+                    <img src="img/biatiger.jpg" alt="Bia Tiger">
+                    <div class="menu-info">
+                        <span class="category-tag">Đồ uống</span>
+                        <h3>Bia Tiger</h3>
+                        <div class="menu-price-green">23.000 đ</div>
+                        <p>Thức uống giải khát có cồn mát lạnh</p>
+                    </div>
+                </div>
+                <div class="menu-item full-item" data-category="do-uong">
+                    <img src="img/cfsua.jpg" alt="Cà phê sữa">
+                    <div class="menu-info">
+                        <span class="category-tag">Đồ uống</span>
+                        <h3>Cà phê sữa</h3>
+                        <div class="menu-price-green">30.000 đ</div>
+                        <p>Hương vị đắng nhẹ đậm đà của cà phê phin truyền thống kèm sữa đặc hòa tan</p>
+                    </div>
+                </div>
+                <div class="menu-item full-item" data-category="mon-chinh">
+                    <img src="img/ganuongmuoiot.jpg" alt="Gà Nướng">
+                    <div class="menu-info">
+                        <span class="category-tag">Món chính</span>
+                        <h3>Gà Nướng Muối Ớt</h3>
+                        <div class="menu-price-green">280.000 đ</div>
+                        <p>Gà đồi thả vườn nướng than hoa vàng ruộm.</p>
+                    </div>
+                </div>
+                <div class="menu-item full-item" data-category="khai-vi">
+                    <img src="img/goingosentomthit.jpg" alt="Gỏi ngó sen">
+                    <div class="menu-info">
+                        <span class="category-tag">Món khai vị</span>
+                        <h3>Gỏi ngó sen tôm thịt</h3>
+                        <div class="menu-price-green">85.000 đ</div>
+                        <p>Gỏi ngó sen giòn rụm chua ngọt khai vị hoàn hảo.</p>
+                    </div>
+                    <img src="img/goicuon.jpeg" alt="Gỏi cuốn">
+                    <div class="menu-info">
+                        <span class="category-tag">Món khai vị</span>
+                        <h3>Gỏi cuốn</h3>
+                        <div class="menu-price-green">85.000 đ</div>
+                        <p>Gỏi cuốn khai vị hoàn hảo.</p>
+                    </div>
+                    <img src="img/chagio.jpg" alt="Chả giò">
+                    <div class="menu-info">
+                        <span class="category-tag">Món khai vị</span>
+                        <h3>Chả giò</h3>
+                        <div class="menu-price-green">85.000 đ</div>
+                        <p>Chả giò.</p>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <h2>🏮 Nhà Hàng Ngói Đỏ</h2>
+            <p>📍 Địa chỉ: 123 Đường Trung Tâm, TP. Hồ Chí Minh</p>
+            <p>📞 Đặt bàn: 0123 456 789</p>
+            <p>✉ Email: ngoido@gmail.com</p>
+            <div class="copyright">
+                <p>&copy; 2026 Bản quyền thuộc về Hệ thống Nhà Hàng Ngói Đỏ.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
